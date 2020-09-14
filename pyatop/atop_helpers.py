@@ -19,13 +19,13 @@ The basic layout of an ATOP log file can be described as the following:
     - Contains statistics about every process on the system.
 
 See https://github.com/Atoptool/atop for more information and references to the C process source code.
-Using schemas and structs from ATOP 1.2.6.
+Using schemas and structs from ATOP 1.26.
 """
 
 import ctypes
+import io
 import zlib
 
-from typing import Any
 from typing import List
 from typing import Tuple
 
@@ -37,8 +37,9 @@ SIZEOF_RECORD = ctypes.sizeof(atop_structs.Record)
 SIZEOF_SSTAT = ctypes.sizeof(atop_structs.SStat)
 SIZEOF_PSTAT = ctypes.sizeof(atop_structs.PStat)
 # Default ATOP sample is once per minute, but it can be manually increased/decreased.
-# Limit the amount of read attempts to 1 per second to ensure we do not get stuck in an infinite loop for any reason.
-MAX_SAMPLES_PER_FILE = 3600
+# Additionally, logs may not rollover as expected, combining multiple hours into 1 log.
+# Limit the amount of read attempts to 1 per second for 1 day to ensure we do not get stuck in an infinite loop.
+MAX_SAMPLES_PER_FILE = 86400
 # Acceptable error messages caused by truncated files due to software resets.
 TRUNCATED_ERRORS = (
     'incomplete or truncated stream',
@@ -49,21 +50,23 @@ TRUNCATED_ERRORS = (
     'invalid stored block lengths',
 )
 SQUASHABLE_ERRORS = [
-    # Caused by empty atop files.
+    # Caused by empty, or very early truncated, atop files.
     'File has incompatible atop/atopsar format',
     'File does not contain raw atop/atopsar output',
 ]
 
 
-def generate_statistics(
-        raw_file: Any,
-        header: atop_structs.Header = None
-) -> Tuple[atop_structs.Record, atop_structs.SStat, atop_structs.PStat]:
+def gen_stats(
+        raw_file: io.FileIO,
+        header: atop_structs.Header = None,
+        max_samples: int = MAX_SAMPLES_PER_FILE,
+) -> Tuple[atop_structs.Record, atop_structs.SStat, List[atop_structs.PStat]]:
     """Read statistics groups from an open ATOP log file.
 
     Args:
         raw_file: An open ATOP file capable of reading as bytes.
         header: The header from the file containing metadata about records to read. If not provided, one will be read.
+        max_samples: Maximum number of samples read from a file.
 
     Yields:
         record, devsstat, devpstats: The next statistic group after reading in raw bytes to objects.
@@ -73,7 +76,7 @@ def generate_statistics(
         get_header(raw_file)
 
     try:
-        for index in range(MAX_SAMPLES_PER_FILE):
+        for _ in range(max_samples):
             # Read the repeating structured information until the end of the file.
             # ATOP log files consist of the following after the header, repeated until the end:
             # 1. Record: Metadata about statistics.
@@ -93,7 +96,7 @@ def generate_statistics(
             raise
 
 
-def get_header(raw_file: Any) -> atop_structs.Header:
+def get_header(raw_file: io.FileIO) -> atop_structs.Header:
     """Get a the raw file header from an open ATOP file.
 
     Arg:
@@ -128,7 +131,7 @@ def get_header(raw_file: Any) -> atop_structs.Header:
 
 
 def get_pstat(
-        raw_file: Any,
+        raw_file: io.FileIO,
         record: atop_structs.Record,
         uncompressed_len: int = SIZEOF_PSTAT
 ) -> List[atop_structs.PStat]:
@@ -163,7 +166,7 @@ def get_pstat(
     return pstats
 
 
-def get_record(raw_file: Any) -> atop_structs.Record:
+def get_record(raw_file: io.FileIO) -> atop_structs.Record:
     """Get the next raw record from an open ATOP file.
 
     Args:
@@ -181,7 +184,7 @@ def get_record(raw_file: Any) -> atop_structs.Record:
 
 
 def get_sstat(
-        raw_file: Any,
+        raw_file: io.FileIO,
         raw_record: atop_structs.Record,
 ) -> atop_structs.SStat:
     """Get the next raw sstat from an open ATOP file.
@@ -204,11 +207,15 @@ def get_sstat(
     return sstat
 
 
+# Disable the following pylint warnings to allow functions to match a consistent type across all parseables.
+# This helps simplify calls allow dynamic function lookups to have consistent input arguments.
+# pylint: disable=unused-argument,invalid-name
+
 def parse_cpu(
         header: atop_structs.Header,
         record: atop_structs.Record,
         sstat: atop_structs.SStat,
-        pstats: atop_structs.PStat
+        pstats: List[atop_structs.PStat],
 ) -> dict:
     """Retrieves statistics for Atop 'cpu' parseable representing per core usage."""
     for index, cpu in enumerate(sstat.cpu.cpu):
@@ -237,7 +244,7 @@ def parse_CPL(
         header: atop_structs.Header,
         record: atop_structs.Record,
         sstat: atop_structs.SStat,
-        pstats: atop_structs.PStat
+        pstats: List[atop_structs.PStat],
 ) -> dict:
     """Retrieves statistics for Atop 'CPL' parseable representing system load."""
     values = {
@@ -257,7 +264,7 @@ def parse_CPU(
         header: atop_structs.Header,
         record: atop_structs.Record,
         sstat: atop_structs.SStat,
-        pstats: atop_structs.PStat
+        pstats: List[atop_structs.PStat],
 ) -> dict:
     """Statistics for Atop 'CPU' parseable representing usage across cores combined."""
     values = {
@@ -282,7 +289,7 @@ def parse_DSK(
         header: atop_structs.Header,
         record: atop_structs.Record,
         sstat: atop_structs.SStat,
-        pstats: atop_structs.PStat
+        pstats: List[atop_structs.PStat],
 ) -> dict:
     """Retrieves statistics for Atop 'DSK' parseable representing disk/drive usage."""
     for disk in sstat.dsk.dsk:
@@ -306,7 +313,7 @@ def parse_LVM(
         header: atop_structs.Header,
         record: atop_structs.Record,
         sstat: atop_structs.SStat,
-        pstats: atop_structs.PStat
+        pstats: List[atop_structs.PStat],
 ) -> dict:
     """Retrieves statistics for Atop 'LVM' parseable representing logical volume usage."""
     for lvm in sstat.dsk.lvm:
@@ -330,7 +337,7 @@ def parse_MDD(
         header: atop_structs.Header,
         record: atop_structs.Record,
         sstat: atop_structs.SStat,
-        pstats: atop_structs.PStat
+        pstats: List[atop_structs.PStat],
 ) -> dict:
     """Retrieves statistics for Atop 'MDD' parseable representing multiple device drive usage."""
     for mdd in sstat.dsk.mdd:
@@ -354,7 +361,7 @@ def parse_MEM(
         header: atop_structs.Header,
         record: atop_structs.Record,
         sstat: atop_structs.SStat,
-        pstats: atop_structs.PStat
+        pstats: List[atop_structs.PStat],
 ) -> dict:
     """Retrieves statistics for Atop 'MEM' parseable representing memory usage."""
     values = {
@@ -375,7 +382,7 @@ def parse_NETL(
         header: atop_structs.Header,
         record: atop_structs.Record,
         sstat: atop_structs.SStat,
-        pstats: atop_structs.PStat
+        pstats: List[atop_structs.PStat],
 ) -> dict:
     """Retrieves statistics for Atop 'NET' parseable representing network usage on lower interfaces."""
     for interface in sstat.intf.intf:
@@ -400,7 +407,7 @@ def parse_NETU(
         header: atop_structs.Header,
         record: atop_structs.Record,
         sstat: atop_structs.SStat,
-        pstats: atop_structs.PStat
+        pstats: List[atop_structs.PStat],
 ) -> dict:
     """Retrieves statistics for Atop 'NET' parseable representing network usage on upper interfaces."""
     values = {
@@ -423,7 +430,7 @@ def parse_PAG(
         header: atop_structs.Header,
         record: atop_structs.Record,
         sstat: atop_structs.SStat,
-        pstats: atop_structs.PStat
+        pstats: List[atop_structs.PStat],
 ) -> dict:
     """Retrieves statistics for Atop 'PAG' parseable representing paging space usage."""
     values = {
@@ -442,7 +449,7 @@ def parse_PRC(
         header: atop_structs.Header,
         record: atop_structs.Record,
         sstat: atop_structs.SStat,
-        pstats: atop_structs.PStat
+        pstats: List[atop_structs.PStat],
 ) -> dict:
     """Retrieves statistics for Atop 'PRC' parseable representing process cpu usage."""
     for pstat in pstats:
@@ -469,7 +476,7 @@ def parse_PRD(
         header: atop_structs.Header,
         record: atop_structs.Record,
         sstat: atop_structs.SStat,
-        pstats: atop_structs.PStat
+        pstats: List[atop_structs.PStat],
 ) -> dict:
     """Retrieves statistics for Atop 'PRD' parseable representing process drive usage."""
     for pstat in pstats:
@@ -494,7 +501,7 @@ def parse_PRG(
         header: atop_structs.Header,
         record: atop_structs.Record,
         sstat: atop_structs.SStat,
-        pstats: atop_structs.PStat
+        pstats: List[atop_structs.PStat],
 ) -> dict:
     """Retrieves statistics for Atop 'PRG' parseable representing process generic details."""
     for pstat in pstats:
@@ -530,7 +537,7 @@ def parse_PRM(
         header: atop_structs.Header,
         record: atop_structs.Record,
         sstat: atop_structs.SStat,
-        pstats: atop_structs.PStat
+        pstats: List[atop_structs.PStat],
 ) -> dict:
     """Retrieves statistics for Atop 'PRM' parseable representing process memory usage."""
     for pstat in pstats:
@@ -556,7 +563,7 @@ def parse_PRN(
         header: atop_structs.Header,
         record: atop_structs.Record,
         sstat: atop_structs.SStat,
-        pstats: atop_structs.PStat
+        pstats: List[atop_structs.PStat],
 ) -> dict:
     """Retrieves statistics for Atop 'PRN' parseable representing process network activity."""
     for pstat in pstats:
@@ -585,7 +592,7 @@ def parse_SWP(
         header: atop_structs.Header,
         record: atop_structs.Record,
         sstat: atop_structs.SStat,
-        pstats: atop_structs.PStat
+        pstats: List[atop_structs.PStat],
 ) -> dict:
     """Retrieves statistics for Atop 'SWP' parseable representing swap space usage."""
     values = {

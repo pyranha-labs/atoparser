@@ -6,6 +6,7 @@ import zlib
 import pytest
 
 from pyatop import atop_helpers
+from pyatop import atop_reader
 from pyatop import atop_structs
 
 # Raw byes from an ATOP file which can be used to simulate reading the file.
@@ -290,7 +291,7 @@ def run_basic_test_case(test_case: dict, context: callable, comparator: callable
     list(TEST_CASES['get_header'].values()),
     ids=list(TEST_CASES['get_header'].keys()),
 )
-def test_get_header(test_case):
+def test_get_header(test_case: dict) -> None:
     """Unit tests for get_header."""
     def comparison_method(result, expected_result):
         """Manual comparison method to convert header into dict."""
@@ -303,7 +304,7 @@ def test_get_header(test_case):
     list(TEST_CASES['get_record'].values()),
     ids=list(TEST_CASES['get_record'].keys()),
 )
-def test_get_record(test_case):
+def test_get_record(test_case: dict) -> None:
     """Unit tests for get_record."""
     def comparison_method(result, expected_result):
         """Manual comparison method to convert record into dict."""
@@ -319,7 +320,7 @@ def test_get_record(test_case):
     list(TEST_CASES['get_sstat'].values()),
     ids=list(TEST_CASES['get_sstat'].keys()),
 )
-def test_get_sstat(test_case):
+def test_get_sstat(test_case: dict) -> None:
     """Unit tests for get_sstat."""
     def comparison_method(result, expected_result):
         """Manual comparison method to convert sstat into dict."""
@@ -334,3 +335,12 @@ def test_get_sstat(test_case):
         context=lambda raw_file, _: atop_helpers.get_sstat(raw_file, record),
         comparator=comparison_method
     )
+
+@pytest.mark.parametrize(
+    'parseable',
+    list(atop_reader.PARSEABLES),
+    ids=list(atop_reader.PARSEABLES),
+)
+def test_parseable_map(parseable: str) -> None:
+    """Unit test to ensure every parseable has a corresponding parse_* function."""
+    assert getattr(atop_helpers, f'parse_{parseable}') is not None, f'Failed to find parse function for {parseable}'

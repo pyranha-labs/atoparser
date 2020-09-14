@@ -9,10 +9,14 @@ to match python CamelCase standards. Each struct includes the following to help 
 Visual whitespace in the _fields_ are also left to help match the original source in readability.
 
 See https://github.com/Atoptool/atop for more information and references to the C process source code.
-Using schemas and structs from ATOP 1.2.6.
+Using schemas and structs from ATOP 1.26.
 """
 
 import ctypes
+
+# Disable the following pylint warnings to allow the variables and classes to match the style from the C.
+# This helps with maintainability and cross-referencing.
+# pylint: disable=invalid-name,too-few-public-methods
 
 # Definitions from time.h
 time_t = ctypes.c_long

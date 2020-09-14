@@ -14,7 +14,7 @@ Iterate over the C structs as Python objects:
 ```
 with gzip.open(file, 'rb') as raw_file:
     header = atop_helpers.get_header(raw_file)
-    for record, sstat, pstat in atop_helpers.generate_statistics(raw_file, header):
+    for record, sstat, pstat in atop_helpers.gen_stats(raw_file, header):
         total_cycles = record.interval * sstat.cpu.nrcpu * header.hertz
         usage = 1 - sstat.cpu.all.itime / total_cycles
         print(f'CPU usage was {usage:.02%}')
