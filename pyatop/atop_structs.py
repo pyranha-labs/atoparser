@@ -107,6 +107,32 @@ class Header(ctypes.Structure):
         ('ifuture', ctypes.c_int * 6),
     ]
 
+    def check_compatibility(self) -> None:
+        """Verify if the loaded values are compatible with this header version.
+
+        Raises:
+            ValueError if not compatible.
+        """
+        compatible = [
+            self.sstatlen == SIZEOF_SSTAT,
+            self.pstatlen == SIZEOF_PSTAT,
+            self.rawheadlen == SIZEOF_HEADER,
+            self.rawreclen == SIZEOF_RECORD,
+        ]
+        if not all(compatible):
+            raise ValueError(f'File has incompatible atop format. Struct length evaluations: {compatible}')
+
+    def get_version(self) -> float:
+        """Convert the raw version into a semantic version.
+
+        Returns:
+            version: The final major.minor version from the header aversion.
+        """
+        major = (self.aversion >> 8) & 0x7f
+        minor = self.aversion & 0xff
+        version = float(f'{major}.{minor}')
+        return version
+
 
 class Record(ctypes.Structure):
     """Top level struct to describe basic process information, and the following SStat and PStat structs.
@@ -575,7 +601,7 @@ class SStat(ctypes.Structure):
     """Top level struct to describe various subsystems.
 
     C Name: sstat
-    C Location: rawlog.c
+    C Location: photosyst.h
     """
 
     _fields_ = [
@@ -623,7 +649,7 @@ class GEN(ctypes.Structure):
 
 
 class CPU(ctypes.Structure):
-    """Embedded struct to describe a single process' processor usage from the 'cpu' parseable.
+    """Embedded struct to describe a single process' processor usage from the 'CPU' parseable.
 
     C Name: cpu
     C Location: photoproc.h
@@ -719,3 +745,10 @@ class PStat(ctypes.Structure):
         ('mem', MEM),
         ('net', NET),
     ]
+
+
+# Cache the default sizes of the structs, these will be reused repeatedly.
+SIZEOF_HEADER = ctypes.sizeof(Header)
+SIZEOF_RECORD = ctypes.sizeof(Record)
+SIZEOF_SSTAT = ctypes.sizeof(SStat)
+SIZEOF_PSTAT = ctypes.sizeof(PStat)

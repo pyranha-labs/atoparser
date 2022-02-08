@@ -26,4 +26,4 @@ pyatop ~/atop.log -P CPU --pretty
 ```
 
 ## Limitations
-- Currently officially supports ATOP 1.26, but may work with other versions.
+- Supports ATOP 1.26, but may work with other versions.

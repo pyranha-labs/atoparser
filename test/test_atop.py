@@ -156,6 +156,22 @@ TEST_CASES = {
             'raises': zlib.error,
         },
     },
+    'header_check_compatibility': {
+        '1.26': {
+            'args': [
+                atop_helpers.get_header(io.BytesIO(HEADER_BYTES))
+            ],
+            'expected_result': None,
+        },
+    },
+    'header_get_version': {
+        '1.26': {
+            'args': [
+                atop_helpers.get_header(io.BytesIO(HEADER_BYTES))
+            ],
+            'expected_result': 1.26,
+        },
+    },
 }
 
 
@@ -335,6 +351,27 @@ def test_get_sstat(test_case: dict) -> None:
         context=lambda raw_file, _: atop_helpers.get_sstat(raw_file, record),
         comparator=comparison_method
     )
+
+
+@pytest.mark.parametrize(
+    'test_case',
+    list(TEST_CASES['header_check_compatibility'].values()),
+    ids=list(TEST_CASES['header_check_compatibility'].keys()),
+)
+def test_header_check_compatibility(test_case: dict) -> None:
+    """Unit tests for header check_compatibility."""
+    run_basic_test_case(test_case, atop_structs.Header.check_compatibility)
+
+
+@pytest.mark.parametrize(
+    'test_case',
+    list(TEST_CASES['header_get_version'].values()),
+    ids=list(TEST_CASES['header_get_version'].keys()),
+)
+def test_header_get_version(test_case: dict) -> None:
+    """Unit tests for header get_version."""
+    run_basic_test_case(test_case, atop_structs.Header.get_version)
+
 
 @pytest.mark.parametrize(
     'parseable',

@@ -17,7 +17,7 @@ def parse_args() -> argparse.Namespace:
         args: Namespace with all the user arguments.
     """
     parser = argparse.ArgumentParser()
-    parser.add_argument('files', nargs='+', help='Files to process. Must be in gzip compressed.')
+    parser.add_argument('files', nargs='+', help='Files to process. May be uncompressed or gzip compressed.')
     parser.add_argument('-P', '--parseables', nargs='+', choices=PARSEABLES, required=True,
                         help='One or more ATOP parseable names. See "man atop" for full details.')
     parser.add_argument('--pretty-print', action='store_true',
@@ -35,7 +35,7 @@ def main() -> None:
         opener = open if '.gz' not in file else gzip.open
         with opener(file, 'rb') as raw_file:
             header = atop_helpers.get_header(raw_file)
-            for record, sstat, pstat in atop_helpers.gen_stats(raw_file, header):
+            for record, sstat, pstat in atop_helpers.generate_statistics(raw_file, header, raise_on_truncation=False):
                 for parseable in args.parseables:
                     for sample in PARSEABLE_MAP[parseable](header, record, sstat, pstat):
                         sample['parseable'] = parseable

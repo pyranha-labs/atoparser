@@ -22,7 +22,6 @@ See https://github.com/Atoptool/atop for more information and references to the 
 Using schemas and structs from ATOP 1.26.
 """
 
-import ctypes
 import io
 import zlib
 
@@ -31,34 +30,16 @@ from typing import Tuple
 
 from pyatop import atop_structs
 
-# Cache the default sizes of the structs, these will be reused repeatedly.
-SIZEOF_HEADER = ctypes.sizeof(atop_structs.Header)
-SIZEOF_RECORD = ctypes.sizeof(atop_structs.Record)
-SIZEOF_SSTAT = ctypes.sizeof(atop_structs.SStat)
-SIZEOF_PSTAT = ctypes.sizeof(atop_structs.PStat)
 # Default ATOP sample is once per minute, but it can be manually increased/decreased.
 # Additionally, logs may not rollover as expected, combining multiple hours into 1 log.
 # Limit the amount of read attempts to 1 per second for 1 day to ensure we do not get stuck in an infinite loop.
 MAX_SAMPLES_PER_FILE = 86400
-# Acceptable error messages caused by truncated files due to software resets.
-TRUNCATED_ERRORS = (
-    'incomplete or truncated stream',
-    'incorrect data check',
-    'invalid block type',
-    'invalid code lengths set',
-    'invalid distance too far back',
-    'invalid stored block lengths',
-)
-SQUASHABLE_ERRORS = [
-    # Caused by empty, or very early truncated, atop files.
-    'File has incompatible atop/atopsar format',
-    'File does not contain raw atop/atopsar output',
-]
 
 
-def gen_stats(
+def generate_statistics(
         raw_file: io.FileIO,
         header: atop_structs.Header = None,
+        raise_on_truncation: bool = True,
         max_samples: int = MAX_SAMPLES_PER_FILE,
 ) -> Tuple[atop_structs.Record, atop_structs.SStat, List[atop_structs.PStat]]:
     """Read statistics groups from an open ATOP log file.
@@ -66,6 +47,7 @@ def gen_stats(
     Args:
         raw_file: An open ATOP file capable of reading as bytes.
         header: The header from the file containing metadata about records to read. If not provided, one will be read.
+        raise_on_truncation: Raise compression exceptions after header is read. e.g. Software restarts
         max_samples: Maximum number of samples read from a file.
 
     Yields:
@@ -86,23 +68,20 @@ def gen_stats(
             devsstat = get_sstat(raw_file, record)
             devpstats = get_pstat(raw_file, record)
             yield record, devsstat, devpstats
-    except zlib.error as error:
-        error_msg = str(error)
-        if any(msg in error_msg for msg in TRUNCATED_ERRORS):
-            # End of readable data reached. This is common during software restarts.
-            # If any portion of the byte stream cannot be read, the entire rest of the file is invalid.
-            pass
-        else:
+    except zlib.error:
+        # End of readable data reached. This is common during software restarts.
+        # All errors after the header are squashable errors, since that means the file is valid, but was not closed.
+        if raise_on_truncation:
             raise
 
 
 def get_header(raw_file: io.FileIO) -> atop_structs.Header:
-    """Get a the raw file header from an open ATOP file.
+    """Get the raw file header from an open ATOP file.
 
-    Arg:
+    Args:
         raw_file: An open ATOP file capable of reading as bytes.
 
-    Return:
+    Returns:
         raw_header: The header at the beginning of an ATOP file.
 
     Raises:
@@ -117,15 +96,7 @@ def get_header(raw_file: io.FileIO) -> atop_structs.Header:
         raise ValueError(msg)
 
     # Ensure all struct lengths match the lengths specific in the header. If not, we cannot read the file further.
-    compatible = [
-        header.sstatlen == SIZEOF_SSTAT,
-        header.pstatlen == SIZEOF_PSTAT,
-        header.rawheadlen == SIZEOF_HEADER,
-        header.rawreclen == SIZEOF_RECORD,
-    ]
-    if not all(compatible):
-        msg = f'File has incompatible atop/atopsar format. Struct length evaluation: {compatible}'
-        raise ValueError(msg)
+    header.check_compatibility()
 
     return header
 
@@ -133,7 +104,7 @@ def get_header(raw_file: io.FileIO) -> atop_structs.Header:
 def get_pstat(
         raw_file: io.FileIO,
         record: atop_structs.Record,
-        uncompressed_len: int = SIZEOF_PSTAT
+        uncompressed_len: int = atop_structs.SIZEOF_PSTAT
 ) -> List[atop_structs.PStat]:
     """Get the next raw pstat array from an open ATOP file.
 
