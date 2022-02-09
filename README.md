@@ -10,20 +10,20 @@ For full information on the amazing performance monitoring software that creates
 
 ## Examples
 
-Iterate over the C structs as Python objects:  
-```
-with gzip.open(file, 'rb') as raw_file:
-    header = atop_helpers.get_header(raw_file)
-    for record, sstat, pstat in atop_helpers.gen_stats(raw_file, header):
-        total_cycles = record.interval * sstat.cpu.nrcpu * header.hertz
-        usage = 1 - sstat.cpu.all.itime / total_cycles
-        print(f'CPU usage was {usage:.02%}')
-```
-
 Read an ATOP log with the example JSON command:
 ```
 pyatop ~/atop.log -P CPU --pretty
 ```
 
+Iterate over the C structs as Python objects:  
+```
+with gzip.open(file, 'rb') as raw_file:
+    header = atop_helpers.get_header(raw_file)
+    for record, sstat, tstat in atop_helpers.generate_statistics(raw_file, header):
+        total_cycles = record.interval * sstat.cpu.nrcpu * header.hertz
+        usage = 1 - sstat.cpu.all.itime / total_cycles
+        print(f'CPU usage was {usage:.02%}')
+```
+
 ## Limitations
-- Supports ATOP 1.26, but may work with other versions.
+- Supports ATOP 1.26 and 2.30, but may work with other versions.

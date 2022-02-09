@@ -1,13 +1,16 @@
 """Simple ATOP log processor."""
 
 import argparse
-import json
 import gzip
+import json
 
 from pyatop import atop_helpers
+from pyatop.parsers import atop_126
 
 PARSEABLES = ['cpu', 'CPL', 'CPU', 'DSK', 'LVM', 'MDD', 'MEM', 'NETL', 'NETU', 'PAG', 'PRC', 'PRG', 'PRM', 'PRN', 'SWP']
-PARSEABLE_MAP = {parseable: getattr(atop_helpers, f'parse_{parseable}') for parseable in PARSEABLES}
+PARSEABLE_MAP = {
+    1.26: {parseable: getattr(atop_126, f'parse_{parseable}') for parseable in PARSEABLES},
+}
 
 
 def parse_args() -> argparse.Namespace:
@@ -35,9 +38,10 @@ def main() -> None:
         opener = open if '.gz' not in file else gzip.open
         with opener(file, 'rb') as raw_file:
             header = atop_helpers.get_header(raw_file)
-            for record, sstat, pstat in atop_helpers.generate_statistics(raw_file, header, raise_on_truncation=False):
+            parsers = PARSEABLE_MAP.get(header.get_version(), PARSEABLE_MAP[1.26])
+            for record, sstat, tstat in atop_helpers.generate_statistics(raw_file, header, raise_on_truncation=False):
                 for parseable in args.parseables:
-                    for sample in PARSEABLE_MAP[parseable](header, record, sstat, pstat):
+                    for sample in parsers[parseable](header, record, sstat, tstat):
                         sample['parseable'] = parseable
                         samples.append(sample)
         print(json.dumps(samples, indent=2 if args.pretty_print else None))

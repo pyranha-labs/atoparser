@@ -7,7 +7,8 @@ import pytest
 
 from pyatop import atop_helpers
 from pyatop import atop_reader
-from pyatop import atop_structs
+from pyatop.parsers import atop_126 as atop_126_parsers
+from pyatop.structs import atop_126 as atop_126_structs
 
 # Raw byes from an ATOP file which can be used to simulate reading the file.
 HEADER_BYTES = b'\xef\xbe\xed\xfe\x1a\x81\x00\x00\x00\x00\xe0\x01P\x00d\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x000Y\x01\x00h\x02\x00\x00Linux\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00fires-of-mount-doom1\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x003.16.0-44-mordor1\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00#59~14.04.1 SMP PREEMPT Fri Dec 28 20:04:09 UTC 2018\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00x86_64\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00theshire.co\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x10\x00\x00\x05\x00\x00\x00\x03\x00\x00\x00\x10\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'
@@ -54,6 +55,7 @@ TEST_CASES = {
         'Valid': {
             'args': [
                 io.BytesIO(HEADER_BYTES + RECORD_BYTES),
+                atop_126_structs.Record,
             ],
             'expected_result': {
                 'curtime': 1556245087,
@@ -73,6 +75,7 @@ TEST_CASES = {
         'Truncated': {
             'args': [
                 io.BytesIO(HEADER_BYTES + RECORD_BYTES[:16]),
+                atop_126_structs.Record,
             ],
             'expected_result': {
                 'curtime': 1556245087,
@@ -175,7 +178,7 @@ TEST_CASES = {
 }
 
 
-def _header_to_dict(header: atop_structs.Header) -> dict:
+def _header_to_dict(header: atop_126_structs.Header) -> dict:
     """Helper to convert header structs into dictionaries for comparison operations."""
     header_map = {
         'magic': header.magic,
@@ -196,7 +199,7 @@ def _header_to_dict(header: atop_structs.Header) -> dict:
     return header_map
 
 
-def _record_to_dict(record: atop_structs.Record) -> dict:
+def _record_to_dict(record: atop_126_structs.Record) -> dict:
     """Helper to convert record structs into dictionaries for comparison operations."""
     record_map = {
         'curtime': record.curtime,
@@ -215,7 +218,7 @@ def _record_to_dict(record: atop_structs.Record) -> dict:
     return record_map
 
 
-def _sstat_to_dict(sstat: atop_structs.SStat) -> dict:
+def _sstat_to_dict(sstat: atop_126_structs.SStat) -> dict:
     """Helper to convert sstat structs into dictionaries for comparison operations."""
     # Only pull the first and last value non-array value from each struct.
     # This will prove bytes were read into structs successfully in the correct order.
@@ -344,11 +347,11 @@ def test_get_sstat(test_case: dict) -> None:
 
     # Read the header and record to ensure the offset is correct prior to reading the record:
     header = atop_helpers.get_header(test_case['args'][0])
-    record = atop_helpers.get_record(test_case['args'][0])
+    record = atop_helpers.get_record(test_case['args'][0], atop_126_structs.Record)
     run_basic_test_case(
         test_case=test_case,
         # Pass in the record that was read from the file since it cannot be declared beforehand
-        context=lambda raw_file, _: atop_helpers.get_sstat(raw_file, record),
+        context=lambda raw_file, _: atop_helpers.get_sstat(raw_file, record, atop_126_structs.SStat),
         comparator=comparison_method
     )
 
@@ -360,7 +363,7 @@ def test_get_sstat(test_case: dict) -> None:
 )
 def test_header_check_compatibility(test_case: dict) -> None:
     """Unit tests for header check_compatibility."""
-    run_basic_test_case(test_case, atop_structs.Header.check_compatibility)
+    run_basic_test_case(test_case, test_case['args'][0].__class__.check_compatibility)
 
 
 @pytest.mark.parametrize(
@@ -370,7 +373,7 @@ def test_header_check_compatibility(test_case: dict) -> None:
 )
 def test_header_get_version(test_case: dict) -> None:
     """Unit tests for header get_version."""
-    run_basic_test_case(test_case, atop_structs.Header.get_version)
+    run_basic_test_case(test_case, test_case['args'][0].__class__.get_version)
 
 
 @pytest.mark.parametrize(
@@ -380,4 +383,4 @@ def test_header_get_version(test_case: dict) -> None:
 )
 def test_parseable_map(parseable: str) -> None:
     """Unit test to ensure every parseable has a corresponding parse_* function."""
-    assert getattr(atop_helpers, f'parse_{parseable}') is not None, f'Failed to find parse function for {parseable}'
+    assert getattr(atop_126_parsers, f'parse_{parseable}') is not None, f'Failed to find parse function for {parseable}'
