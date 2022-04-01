@@ -110,16 +110,20 @@ class Header(ctypes.Structure):
         if not all(compatible):
             raise ValueError(f'File has incompatible atop format. Struct length evaluations: {compatible}')
 
-    def get_version(self) -> float:
+    @property
+    def semantic_version(self) -> float:
         """Convert the raw version into a semantic version.
 
-        Returns:
+        Return:
             version: The final major.minor version from the header aversion.
         """
-        major = (self.aversion >> 8) & 0x7f
-        minor = self.aversion & 0xff
-        version = float(f'{major}.{minor}')
-        return version
+        # Use a general getattr() call to ensure the instance can always set the attribute even on first call.
+        # C structs have various ways of creating instances, so __init__ is not always called to set up attributes.
+        if not getattr(self, '_version', None):
+            major = (self.aversion >> 8) & 0x7f
+            minor = self.aversion & 0xff
+            self._version = float(f'{major}.{minor}')  # pylint: disable=attribute-defined-outside-init
+        return self._version
 
 
 class Record(ctypes.Structure):

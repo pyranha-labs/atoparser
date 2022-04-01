@@ -100,7 +100,7 @@ def generate_statistics(
         header = get_header(raw_file)
 
     try:
-        header_version = header.get_version()
+        header_version = header.semantic_version
         record_cls = _RECORD_BY_VERSION.get(header_version, _RECORD_BY_VERSION[_DEFAULT_VERSION])
         sstat_cls = _SSTAT_BY_VERSION.get(header_version, _SSTAT_BY_VERSION[_DEFAULT_VERSION])
         tstat_cls = _TSTAT_BY_VERSION.get(header_version, _TSTAT_BY_VERSION[_DEFAULT_VERSION])
@@ -142,7 +142,7 @@ def get_header(raw_file: io.FileIO) -> Header:
         msg = f'File does not contain raw atop output (wrong magic number): {hex(header.magic)}'
         raise ValueError(msg)
 
-    header_version = header.get_version()
+    header_version = header.semantic_version
     if header_version != _DEFAULT_VERSION and header_version in _HEADER_BY_VERSION:
         # Header byte length is consistent across versions. Transfer the initial read into the versioned header.
         header = _HEADER_BY_VERSION[header_version].from_buffer(header)

@@ -167,7 +167,7 @@ TEST_CASES = {
             'expected_result': None,
         },
     },
-    'header_get_version': {
+    'header_semantic_version': {
         '1.26': {
             'args': [
                 atop_helpers.get_header(io.BytesIO(HEADER_BYTES))
@@ -368,12 +368,12 @@ def test_header_check_compatibility(test_case: dict) -> None:
 
 @pytest.mark.parametrize(
     'test_case',
-    list(TEST_CASES['header_get_version'].values()),
-    ids=list(TEST_CASES['header_get_version'].keys()),
+    list(TEST_CASES['header_semantic_version'].values()),
+    ids=list(TEST_CASES['header_semantic_version'].keys()),
 )
-def test_header_get_version(test_case: dict) -> None:
-    """Unit tests for header get_version."""
-    run_basic_test_case(test_case, test_case['args'][0].__class__.get_version)
+def test_header_semantic_version(test_case: dict) -> None:
+    """Unit tests for header semantic_version."""
+    run_basic_test_case(test_case, lambda self: self.semantic_version)
 
 
 @pytest.mark.parametrize(
