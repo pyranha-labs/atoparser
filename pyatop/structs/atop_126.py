@@ -268,6 +268,9 @@ class CPUStat(ctypes.Structure):
         ('all', PerCPU),
         ('cpu', PerCPU * MAXCPU)
     ]
+    fields_limiters = {
+        'cpu': 'nrcpu'
+    }
 
 
 class IPv4Stats(ctypes.Structure):
@@ -528,6 +531,11 @@ class DSKStat(ctypes.Structure):
         ('mdd', PerDSK * MAXMDD),
         ('lvm', PerDSK * MAXLVM),
     ]
+    fields_limiters = {
+        'dsk': 'ndsk',
+        'mdd': 'nmdd',
+        'lvm': 'nlvm',
+    }
 
 
 class PerIntf(ctypes.Structure):
@@ -579,6 +587,9 @@ class IntfStat(ctypes.Structure):
         ('nrintf', ctypes.c_int),
         ('intf', PerIntf * MAXINTF),
     ]
+    fields_limiters = {
+        'intf': 'nrintf',
+    }
 
 
 class WWWStat(ctypes.Structure):

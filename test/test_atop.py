@@ -175,6 +175,35 @@ TEST_CASES = {
             'expected_result': 1.26,
         },
     },
+    'struct_to_dict': {
+        '1.26': {
+            'args': [
+                atop_helpers.get_header(io.BytesIO(HEADER_BYTES))
+            ],
+            'expected_result': {
+                'aversion': 33050,
+                'hertz': 100,
+                'magic': 4276993775,
+                'osrel': 3,
+                'ossub': 0,
+                'osvers': 16,
+                'pagesize': 4096,
+                'pstatlen': 616,
+                'rawheadlen': 480,
+                'rawreclen': 80,
+                'sstatlen': 88368,
+                'supportflags': 5,
+                'utsname': {
+                    'domain': 'theshire.co',
+                    'machine': 'x86_64',
+                    'nodename': 'fires-of-mount-doom1',
+                    'release': '3.16.0-44-mordor1',
+                    'sysname': 'Linux',
+                    'version': '#59~14.04.1 SMP PREEMPT Fri Dec 28 20:04:09 UTC 2018'
+                }
+            },
+        },
+    }
 }
 
 
@@ -384,3 +413,13 @@ def test_header_semantic_version(test_case: dict) -> None:
 def test_parseable_map(parseable: str) -> None:
     """Unit test to ensure every parseable has a corresponding parse_* function."""
     assert getattr(atop_126_parsers, f'parse_{parseable}') is not None, f'Failed to find parse function for {parseable}'
+
+
+@pytest.mark.parametrize(
+    'test_case',
+    list(TEST_CASES['struct_to_dict'].values()),
+    ids=list(TEST_CASES['struct_to_dict'].keys()),
+)
+def test_struct_to_dict(test_case: dict) -> None:
+    """Unit test to verify conversion of C structs into basic dicts."""
+    run_basic_test_case(test_case, atop_helpers.struct_to_dict)

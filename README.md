@@ -25,5 +25,12 @@ with gzip.open(file, 'rb') as raw_file:
         print(f'CPU usage was {usage:.02%}')
 ```
 
+Convert the C structs into JSON compatible objects:  
+```
+with gzip.open(file, 'rb') as raw_file:
+    header = atop_helpers.get_header(raw_file)
+    print(json.dumps(atop_helpers.struct_to_dict(header), indent=2))
+```
+
 ## Limitations
 - Supports ATOP 1.26 and 2.30, but may work with other versions.

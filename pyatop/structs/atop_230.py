@@ -267,6 +267,9 @@ class CPUStat(ctypes.Structure):
         ('all', PerCPU),
         ('cpu', PerCPU * MAXCPU)
     ]
+    fields_limiters = {
+        'cpu': 'nrcpu'
+    }
 
 
 class PerDSK(ctypes.Structure):
@@ -305,6 +308,11 @@ class DSKStat(ctypes.Structure):
         ('mdd', PerDSK * MAXMDD),
         ('lvm', PerDSK * MAXLVM),
     ]
+    fields_limiters = {
+        'dsk': 'ndsk',
+        'mdd': 'nmdd',
+        'lvm': 'nlvm',
+    }
 
 
 class PerIntf(ctypes.Structure):
@@ -358,6 +366,9 @@ class IntfStat(ctypes.Structure):
         ('nrintf', ctypes.c_int),
         ('intf', PerIntf * MAXINTF),
     ]
+    fields_limiters = {
+        'intf': 'nrintf',
+    }
 
 
 class PerNFSMount(ctypes.Structure):
@@ -450,6 +461,9 @@ class NFSMounts(ctypes.Structure):
         ('nrmounts', ctypes.c_int),
         ('pernfsmount', PerNFSMount * MAXNFSMOUNT)
     ]
+    fields_limiters = {
+        'pernfsmount': 'nrmounts',
+    }
 
 
 class NFSStat(ctypes.Structure):
@@ -500,6 +514,9 @@ class ContStat(ctypes.Structure):
         ('nrcontainer', ctypes.c_int),
         ('cont', PerContainer * MAXCONTAINER),
     ]
+    fields_limiters = {
+        'cont': 'nrcontainer',
+    }
 
 
 WWWStat = atop_126.WWWStat

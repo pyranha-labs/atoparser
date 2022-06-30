@@ -233,3 +233,36 @@ def get_sstat(
     decompressed = zlib.decompress(buffer)
     sstat = sstat_cls.from_buffer_copy(decompressed)
     return sstat
+
+
+def struct_to_dict(struct: ctypes.Structure) -> dict:
+    """Convert C struct, and all nested structs, into a Python dictionary.
+
+    Skips any "future" named fields since they are empty placeholders for potential future versions.
+
+    Args:
+        struct: C struct loaded from raw ATOP file.
+
+    Returns:
+        struct_dict: C struct converted into a dictionary using the names of the struct's fields as keys.
+    """
+    struct_dict = {}
+    for field in struct._fields_:  # pylint: disable=protected-access
+        field_name = field[0]
+        field_data = getattr(struct, field_name)
+        if isinstance(field_data, ctypes.Structure):
+            struct_dict[field_name] = struct_to_dict(field_data)
+        elif 'future' not in field_name:
+            if isinstance(field_data, ctypes.Array):
+                struct_dict[field_name] = []
+                limiters = getattr(struct, 'fields_limiters', {})
+                limiter = limiters.get(field_name)
+                if limiter:
+                    field_data = field_data[:getattr(struct, limiter)]
+                for subdata in field_data[:getattr(struct, struct.fields_limiters.get(field_name))]:
+                    struct_dict[field_name].append(struct_to_dict(subdata))
+            elif isinstance(field_data, bytes):
+                struct_dict[field_name] = field_data.decode()
+            else:
+                struct_dict[field_name] = field_data
+    return struct_dict
