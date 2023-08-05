@@ -1,0 +1,13 @@
+exclude_dirs:
+    - .venv
+    - .virtualenv
+    - venv
+    - virtualenv
+    - test
+    - tests
+
+targets:
+  - pyatop
+
+skips:
+  - B101

@@ -53,12 +53,12 @@ class UTSName(ctypes.Structure):
 
     _fields_ = [
         # Standard GNU length is 64 characters + null terminator
-        ('sysname', ctypes.c_char * 65),
-        ('nodename', ctypes.c_char * 65),
-        ('release', ctypes.c_char * 65),
-        ('version', ctypes.c_char * 65),
-        ('machine', ctypes.c_char * 65),
-        ('domain', ctypes.c_char * 65)
+        ("sysname", ctypes.c_char * 65),
+        ("nodename", ctypes.c_char * 65),
+        ("release", ctypes.c_char * 65),
+        ("version", ctypes.c_char * 65),
+        ("machine", ctypes.c_char * 65),
+        ("domain", ctypes.c_char * 65),
     ]
 
 
@@ -82,26 +82,24 @@ class Header(ctypes.Structure):
     """
 
     _fields_ = [
-        ('magic', ctypes.c_uint),
-
-        ('aversion', ctypes.c_ushort),
-        ('future1', ctypes.c_ushort),
-        ('future2', ctypes.c_ushort),
-        ('rawheadlen', ctypes.c_ushort),
-        ('rawreclen', ctypes.c_ushort),
-        ('hertz', ctypes.c_ushort),
-        ('sfuture', ctypes.c_ushort * 6),
-        ('sstatlen', ctypes.c_uint),
-        ('pstatlen', ctypes.c_uint),
-        ('utsname', UTSName),
-        ('cfuture', ctypes.c_char * 8),
-
-        ('pagesize', ctypes.c_uint),
-        ('supportflags', ctypes.c_int),
-        ('osrel', ctypes.c_int),
-        ('osvers', ctypes.c_int),
-        ('ossub', ctypes.c_int),
-        ('ifuture', ctypes.c_int * 6),
+        ("magic", ctypes.c_uint),
+        ("aversion", ctypes.c_ushort),
+        ("future1", ctypes.c_ushort),
+        ("future2", ctypes.c_ushort),
+        ("rawheadlen", ctypes.c_ushort),
+        ("rawreclen", ctypes.c_ushort),
+        ("hertz", ctypes.c_ushort),
+        ("sfuture", ctypes.c_ushort * 6),
+        ("sstatlen", ctypes.c_uint),
+        ("pstatlen", ctypes.c_uint),
+        ("utsname", UTSName),
+        ("cfuture", ctypes.c_char * 8),
+        ("pagesize", ctypes.c_uint),
+        ("supportflags", ctypes.c_int),
+        ("osrel", ctypes.c_int),
+        ("osvers", ctypes.c_int),
+        ("ossub", ctypes.c_int),
+        ("ifuture", ctypes.c_int * 6),
     ]
 
     def check_compatibility(self) -> None:
@@ -117,21 +115,21 @@ class Header(ctypes.Structure):
             self.rawreclen == ctypes.sizeof(Record),
         ]
         if not all(compatible):
-            raise ValueError(f'File has incompatible atop format. Struct length evaluations: {compatible}')
+            raise ValueError(f"File has incompatible atop format. Struct length evaluations: {compatible}")
 
     @property
     def semantic_version(self) -> float:
         """Convert the raw version into a semantic version.
 
-        Return:
+        Returns:
             version: The final major.minor version from the header aversion.
         """
         # Use a general getattr() call to ensure the instance can always set the attribute even on first call.
         # C structs have various ways of creating instances, so __init__ is not always called to set up attributes.
-        if not getattr(self, '_version', None):
-            major = (self.aversion >> 8) & 0x7f
-            minor = self.aversion & 0xff
-            self._version = float(f'{major}.{minor}')  # pylint: disable=attribute-defined-outside-init
+        if not getattr(self, "_version", None):
+            major = (self.aversion >> 8) & 0x7F
+            minor = self.aversion & 0xFF
+            self._version = float(f"{major}.{minor}")  # pylint: disable=attribute-defined-outside-init
         return self._version
 
 
@@ -159,22 +157,20 @@ class Record(ctypes.Structure):
     """
 
     _fields_ = [
-        ('curtime', time_t),
-
-        ('flags', ctypes.c_ushort),
-        ('sfuture', ctypes.c_ushort * 3),
-
-        ('scomplen', ctypes.c_uint),
-        ('pcomplen', ctypes.c_uint),
-        ('interval', ctypes.c_uint),
-        ('nlist', ctypes.c_uint),
-        ('npresent', ctypes.c_uint),
-        ('nexit', ctypes.c_uint),
-        ('ntrun', ctypes.c_uint),
-        ('ntslpi', ctypes.c_uint),
-        ('ntslpu', ctypes.c_uint),
-        ('nzombie', ctypes.c_uint),
-        ('ifuture', ctypes.c_uint * 6),
+        ("curtime", time_t),
+        ("flags", ctypes.c_ushort),
+        ("sfuture", ctypes.c_ushort * 3),
+        ("scomplen", ctypes.c_uint),
+        ("pcomplen", ctypes.c_uint),
+        ("interval", ctypes.c_uint),
+        ("nlist", ctypes.c_uint),
+        ("npresent", ctypes.c_uint),
+        ("nexit", ctypes.c_uint),
+        ("ntrun", ctypes.c_uint),
+        ("ntslpi", ctypes.c_uint),
+        ("ntslpu", ctypes.c_uint),
+        ("nzombie", ctypes.c_uint),
+        ("ifuture", ctypes.c_uint * 6),
     ]
 
 
@@ -187,24 +183,21 @@ class MemStat(ctypes.Structure):
     """
 
     _fields_ = [
-        ('physmem', count_t),
-        ('freemem', count_t),
-        ('buffermem', count_t),
-        ('slabmem', count_t),
-        ('cachemem', count_t),
-        ('cachedrt', count_t),
-
-        ('totswap', count_t),
-        ('freeswap', count_t),
-
-        ('pgscans', count_t),
-        ('allocstall', count_t),
-        ('swouts', count_t),
-        ('swins', count_t),
-
-        ('commitlim', count_t),
-        ('committed', count_t),
-        ('cfuture', count_t * 4),
+        ("physmem", count_t),
+        ("freemem", count_t),
+        ("buffermem", count_t),
+        ("slabmem", count_t),
+        ("cachemem", count_t),
+        ("cachedrt", count_t),
+        ("totswap", count_t),
+        ("freeswap", count_t),
+        ("pgscans", count_t),
+        ("allocstall", count_t),
+        ("swouts", count_t),
+        ("swins", count_t),
+        ("commitlim", count_t),
+        ("committed", count_t),
+        ("cfuture", count_t * 4),
     ]
 
 
@@ -217,9 +210,9 @@ class FreqCnt(ctypes.Structure):
     """
 
     _fields_ = [
-        ('maxfreq', count_t),
-        ('cnt', count_t),
-        ('ticks', count_t),
+        ("maxfreq", count_t),
+        ("cnt", count_t),
+        ("ticks", count_t),
     ]
 
 
@@ -232,18 +225,18 @@ class PerCPU(ctypes.Structure):
     """
 
     _fields_ = [
-        ('cpunr', ctypes.c_int),
-        ('stime', count_t),
-        ('utime', count_t),
-        ('ntime', count_t),
-        ('itime', count_t),
-        ('wtime', count_t),
-        ('Itime', count_t),
-        ('Stime', count_t),
-        ('steal', count_t),
-        ('guest', count_t),
-        ('freqcnt', FreqCnt),
-        ('cfuture', count_t * 1),
+        ("cpunr", ctypes.c_int),
+        ("stime", count_t),
+        ("utime", count_t),
+        ("ntime", count_t),
+        ("itime", count_t),
+        ("wtime", count_t),
+        ("Itime", count_t),
+        ("Stime", count_t),
+        ("steal", count_t),
+        ("guest", count_t),
+        ("freqcnt", FreqCnt),
+        ("cfuture", count_t * 1),
     ]
 
 
@@ -256,21 +249,18 @@ class CPUStat(ctypes.Structure):
     """
 
     _fields_ = [
-        ('nrcpu', count_t),
-        ('devint', count_t),
-        ('csw', count_t),
-        ('nprocs', count_t),
-        ('lavg1', ctypes.c_float),
-        ('lavg5', ctypes.c_float),
-        ('lavg15', ctypes.c_float),
-        ('cfuture', count_t * 4),
-
-        ('all', PerCPU),
-        ('cpu', PerCPU * MAXCPU)
+        ("nrcpu", count_t),
+        ("devint", count_t),
+        ("csw", count_t),
+        ("nprocs", count_t),
+        ("lavg1", ctypes.c_float),
+        ("lavg5", ctypes.c_float),
+        ("lavg15", ctypes.c_float),
+        ("cfuture", count_t * 4),
+        ("all", PerCPU),
+        ("cpu", PerCPU * MAXCPU),
     ]
-    fields_limiters = {
-        'cpu': 'nrcpu'
-    }
+    fields_limiters = {"cpu": "nrcpu"}
 
 
 class IPv4Stats(ctypes.Structure):
@@ -282,25 +272,25 @@ class IPv4Stats(ctypes.Structure):
     """
 
     _fields_ = [
-        ('Forwarding', count_t),
-        ('DefaultTTL', count_t),
-        ('InReceives', count_t),
-        ('InHdrErrors', count_t),
-        ('InAddrErrors', count_t),
-        ('ForwDatagrams', count_t),
-        ('InUnknownProtos', count_t),
-        ('InDiscards', count_t),
-        ('InDelivers', count_t),
-        ('OutRequests', count_t),
-        ('OutDiscards', count_t),
-        ('OutNoRoutes', count_t),
-        ('ReasmTimeout', count_t),
-        ('ReasmReqds', count_t),
-        ('ReasmOKs', count_t),
-        ('ReasmFails', count_t),
-        ('FragOKs', count_t),
-        ('FragFails', count_t),
-        ('FragCreates', count_t),
+        ("Forwarding", count_t),
+        ("DefaultTTL", count_t),
+        ("InReceives", count_t),
+        ("InHdrErrors", count_t),
+        ("InAddrErrors", count_t),
+        ("ForwDatagrams", count_t),
+        ("InUnknownProtos", count_t),
+        ("InDiscards", count_t),
+        ("InDelivers", count_t),
+        ("OutRequests", count_t),
+        ("OutDiscards", count_t),
+        ("OutNoRoutes", count_t),
+        ("ReasmTimeout", count_t),
+        ("ReasmReqds", count_t),
+        ("ReasmOKs", count_t),
+        ("ReasmFails", count_t),
+        ("FragOKs", count_t),
+        ("FragFails", count_t),
+        ("FragCreates", count_t),
     ]
 
 
@@ -313,32 +303,32 @@ class ICMPv4Stats(ctypes.Structure):
     """
 
     _fields_ = [
-        ('InMsgs', count_t),
-        ('InErrors', count_t),
-        ('InDestUnreachs', count_t),
-        ('InTimeExcds', count_t),
-        ('InParmProbs', count_t),
-        ('InSrcQuenchs', count_t),
-        ('InRedirects', count_t),
-        ('InEchos', count_t),
-        ('InEchoReps', count_t),
-        ('InTimestamps', count_t),
-        ('InTimestampReps', count_t),
-        ('InAddrMasks', count_t),
-        ('InAddrMaskReps', count_t),
-        ('OutMsgs', count_t),
-        ('OutErrors', count_t),
-        ('OutDestUnreachs', count_t),
-        ('OutTimeExcds', count_t),
-        ('OutParmProbs', count_t),
-        ('OutSrcQuenchs', count_t),
-        ('OutRedirects', count_t),
-        ('OutEchos', count_t),
-        ('OutEchoReps', count_t),
-        ('OutTimestamps', count_t),
-        ('OutTimestampReps', count_t),
-        ('OutAddrMasks', count_t),
-        ('OutAddrMaskReps', count_t),
+        ("InMsgs", count_t),
+        ("InErrors", count_t),
+        ("InDestUnreachs", count_t),
+        ("InTimeExcds", count_t),
+        ("InParmProbs", count_t),
+        ("InSrcQuenchs", count_t),
+        ("InRedirects", count_t),
+        ("InEchos", count_t),
+        ("InEchoReps", count_t),
+        ("InTimestamps", count_t),
+        ("InTimestampReps", count_t),
+        ("InAddrMasks", count_t),
+        ("InAddrMaskReps", count_t),
+        ("OutMsgs", count_t),
+        ("OutErrors", count_t),
+        ("OutDestUnreachs", count_t),
+        ("OutTimeExcds", count_t),
+        ("OutParmProbs", count_t),
+        ("OutSrcQuenchs", count_t),
+        ("OutRedirects", count_t),
+        ("OutEchos", count_t),
+        ("OutEchoReps", count_t),
+        ("OutTimestamps", count_t),
+        ("OutTimestampReps", count_t),
+        ("OutAddrMasks", count_t),
+        ("OutAddrMaskReps", count_t),
     ]
 
 
@@ -351,10 +341,10 @@ class UDPv4Stats(ctypes.Structure):
     """
 
     _fields_ = [
-        ('InDatagrams', count_t),
-        ('NoPorts', count_t),
-        ('InErrors', count_t),
-        ('OutDatagrams', count_t),
+        ("InDatagrams", count_t),
+        ("NoPorts", count_t),
+        ("InErrors", count_t),
+        ("OutDatagrams", count_t),
     ]
 
 
@@ -367,20 +357,20 @@ class TCPStats(ctypes.Structure):
     """
 
     _fields_ = [
-        ('RtoAlgorithm', count_t),
-        ('RtoMin', count_t),
-        ('RtoMax', count_t),
-        ('MaxConn', count_t),
-        ('ActiveOpens', count_t),
-        ('PassiveOpens', count_t),
-        ('AttemptFails', count_t),
-        ('EstabResets', count_t),
-        ('CurrEstab', count_t),
-        ('InSegs', count_t),
-        ('OutSegs', count_t),
-        ('RetransSegs', count_t),
-        ('InErrs', count_t),
-        ('OutRsts', count_t),
+        ("RtoAlgorithm", count_t),
+        ("RtoMin", count_t),
+        ("RtoMax", count_t),
+        ("MaxConn", count_t),
+        ("ActiveOpens", count_t),
+        ("PassiveOpens", count_t),
+        ("AttemptFails", count_t),
+        ("EstabResets", count_t),
+        ("CurrEstab", count_t),
+        ("InSegs", count_t),
+        ("OutSegs", count_t),
+        ("RetransSegs", count_t),
+        ("InErrs", count_t),
+        ("OutRsts", count_t),
     ]
 
 
@@ -393,28 +383,28 @@ class IPv6Stats(ctypes.Structure):
     """
 
     _fields_ = [
-        ('Ip6InReceives', count_t),
-        ('Ip6InHdrErrors', count_t),
-        ('Ip6InTooBigErrors', count_t),
-        ('Ip6InNoRoutes', count_t),
-        ('Ip6InAddrErrors', count_t),
-        ('Ip6InUnknownProtos', count_t),
-        ('Ip6InTruncatedPkts', count_t),
-        ('Ip6InDiscards', count_t),
-        ('Ip6InDelivers', count_t),
-        ('Ip6OutForwDatagrams', count_t),
-        ('Ip6OutRequests', count_t),
-        ('Ip6OutDiscards', count_t),
-        ('Ip6OutNoRoutes', count_t),
-        ('Ip6ReasmTimeout', count_t),
-        ('Ip6ReasmReqds', count_t),
-        ('Ip6ReasmOKs', count_t),
-        ('Ip6ReasmFails', count_t),
-        ('Ip6FragOKs', count_t),
-        ('Ip6FragFails', count_t),
-        ('Ip6FragCreates', count_t),
-        ('Ip6InMcastPkts', count_t),
-        ('Ip6OutMcastPkts', count_t),
+        ("Ip6InReceives", count_t),
+        ("Ip6InHdrErrors", count_t),
+        ("Ip6InTooBigErrors", count_t),
+        ("Ip6InNoRoutes", count_t),
+        ("Ip6InAddrErrors", count_t),
+        ("Ip6InUnknownProtos", count_t),
+        ("Ip6InTruncatedPkts", count_t),
+        ("Ip6InDiscards", count_t),
+        ("Ip6InDelivers", count_t),
+        ("Ip6OutForwDatagrams", count_t),
+        ("Ip6OutRequests", count_t),
+        ("Ip6OutDiscards", count_t),
+        ("Ip6OutNoRoutes", count_t),
+        ("Ip6ReasmTimeout", count_t),
+        ("Ip6ReasmReqds", count_t),
+        ("Ip6ReasmOKs", count_t),
+        ("Ip6ReasmFails", count_t),
+        ("Ip6FragOKs", count_t),
+        ("Ip6FragFails", count_t),
+        ("Ip6FragCreates", count_t),
+        ("Ip6InMcastPkts", count_t),
+        ("Ip6OutMcastPkts", count_t),
     ]
 
 
@@ -427,34 +417,34 @@ class ICMPv6Stats(ctypes.Structure):
     """
 
     _fields_ = [
-        ('Icmp6InMsgs', count_t),
-        ('Icmp6InErrors', count_t),
-        ('Icmp6InDestUnreachs', count_t),
-        ('Icmp6InPktTooBigs', count_t),
-        ('Icmp6InTimeExcds', count_t),
-        ('Icmp6InParmProblems', count_t),
-        ('Icmp6InEchos', count_t),
-        ('Icmp6InEchoReplies', count_t),
-        ('Icmp6InGroupMembQueries', count_t),
-        ('Icmp6InGroupMembResponses', count_t),
-        ('Icmp6InGroupMembReductions', count_t),
-        ('Icmp6InRouterSolicits', count_t),
-        ('Icmp6InRouterAdvertisements', count_t),
-        ('Icmp6InNeighborSolicits', count_t),
-        ('Icmp6InNeighborAdvertisements', count_t),
-        ('Icmp6InRedirects', count_t),
-        ('Icmp6OutMsgs', count_t),
-        ('Icmp6OutDestUnreachs', count_t),
-        ('Icmp6OutPktTooBigs', count_t),
-        ('Icmp6OutTimeExcds', count_t),
-        ('Icmp6OutParmProblems', count_t),
-        ('Icmp6OutEchoReplies', count_t),
-        ('Icmp6OutRouterSolicits', count_t),
-        ('Icmp6OutNeighborSolicits', count_t),
-        ('Icmp6OutNeighborAdvertisements', count_t),
-        ('Icmp6OutRedirects', count_t),
-        ('Icmp6OutGroupMembResponses', count_t),
-        ('Icmp6OutGroupMembReductions', count_t),
+        ("Icmp6InMsgs", count_t),
+        ("Icmp6InErrors", count_t),
+        ("Icmp6InDestUnreachs", count_t),
+        ("Icmp6InPktTooBigs", count_t),
+        ("Icmp6InTimeExcds", count_t),
+        ("Icmp6InParmProblems", count_t),
+        ("Icmp6InEchos", count_t),
+        ("Icmp6InEchoReplies", count_t),
+        ("Icmp6InGroupMembQueries", count_t),
+        ("Icmp6InGroupMembResponses", count_t),
+        ("Icmp6InGroupMembReductions", count_t),
+        ("Icmp6InRouterSolicits", count_t),
+        ("Icmp6InRouterAdvertisements", count_t),
+        ("Icmp6InNeighborSolicits", count_t),
+        ("Icmp6InNeighborAdvertisements", count_t),
+        ("Icmp6InRedirects", count_t),
+        ("Icmp6OutMsgs", count_t),
+        ("Icmp6OutDestUnreachs", count_t),
+        ("Icmp6OutPktTooBigs", count_t),
+        ("Icmp6OutTimeExcds", count_t),
+        ("Icmp6OutParmProblems", count_t),
+        ("Icmp6OutEchoReplies", count_t),
+        ("Icmp6OutRouterSolicits", count_t),
+        ("Icmp6OutNeighborSolicits", count_t),
+        ("Icmp6OutNeighborAdvertisements", count_t),
+        ("Icmp6OutRedirects", count_t),
+        ("Icmp6OutGroupMembResponses", count_t),
+        ("Icmp6OutGroupMembReductions", count_t),
     ]
 
 
@@ -467,10 +457,10 @@ class UDPv6Stats(ctypes.Structure):
     """
 
     _fields_ = [
-        ('Udp6InDatagrams', count_t),
-        ('Udp6NoPorts', count_t),
-        ('Udp6InErrors', count_t),
-        ('Udp6OutDatagrams', count_t),
+        ("Udp6InDatagrams", count_t),
+        ("Udp6NoPorts", count_t),
+        ("Udp6InErrors", count_t),
+        ("Udp6OutDatagrams", count_t),
     ]
 
 
@@ -483,15 +473,13 @@ class NETStat(ctypes.Structure):
     """
 
     _fields_ = [
-        ('ipv4', IPv4Stats),
-        ('icmpv4', ICMPv4Stats),
-        ('udpv4', UDPv4Stats),
-
-        ('ipv6', IPv6Stats),
-        ('icmpv6', ICMPv6Stats),
-        ('udpv6', UDPv6Stats),
-
-        ('tcp', TCPStats),
+        ("ipv4", IPv4Stats),
+        ("icmpv4", ICMPv4Stats),
+        ("udpv4", UDPv4Stats),
+        ("ipv6", IPv6Stats),
+        ("icmpv6", ICMPv6Stats),
+        ("udpv6", UDPv6Stats),
+        ("tcp", TCPStats),
     ]
 
 
@@ -504,14 +492,14 @@ class PerDSK(ctypes.Structure):
     """
 
     _fields_ = [
-        ('name', ctypes.c_char * MAXDKNAM),
-        ('nread', count_t),
-        ('nrsect', count_t),
-        ('nwrite', count_t),
-        ('nwsect', count_t),
-        ('io_ms', count_t),
-        ('avque', count_t),
-        ('cfuture', count_t * 4),
+        ("name", ctypes.c_char * MAXDKNAM),
+        ("nread", count_t),
+        ("nrsect", count_t),
+        ("nwrite", count_t),
+        ("nwsect", count_t),
+        ("io_ms", count_t),
+        ("avque", count_t),
+        ("cfuture", count_t * 4),
     ]
 
 
@@ -524,17 +512,17 @@ class DSKStat(ctypes.Structure):
     """
 
     _fields_ = [
-        ('ndsk', ctypes.c_int),
-        ('nmdd', ctypes.c_int),
-        ('nlvm', ctypes.c_int),
-        ('dsk', PerDSK * MAXDSK),
-        ('mdd', PerDSK * MAXMDD),
-        ('lvm', PerDSK * MAXLVM),
+        ("ndsk", ctypes.c_int),
+        ("nmdd", ctypes.c_int),
+        ("nlvm", ctypes.c_int),
+        ("dsk", PerDSK * MAXDSK),
+        ("mdd", PerDSK * MAXMDD),
+        ("lvm", PerDSK * MAXLVM),
     ]
     fields_limiters = {
-        'dsk': 'ndsk',
-        'mdd': 'nmdd',
-        'lvm': 'nlvm',
+        "dsk": "ndsk",
+        "mdd": "nmdd",
+        "lvm": "nlvm",
     }
 
 
@@ -547,31 +535,28 @@ class PerIntf(ctypes.Structure):
     """
 
     _fields_ = [
-        ('name', ctypes.c_char * 16),
-
-        ('rbyte', count_t),
-        ('rpack', count_t),
-        ('rerrs', count_t),
-        ('rdrop', count_t),
-        ('rfifo', count_t),
-        ('rframe', count_t),
-        ('rcompr', count_t),
-        ('rmultic', count_t),
-        ('rfuture', count_t * 4),
-
-        ('sbyte', count_t),
-        ('spack', count_t),
-        ('serrs', count_t),
-        ('sdrop', count_t),
-        ('sfifo', count_t),
-        ('scollis', count_t),
-        ('scarrier', count_t),
-        ('scompr', count_t),
-        ('sfuture', count_t * 4),
-
-        ('speed', ctypes.c_long),
-        ('duplex', ctypes.c_char),
-        ('cfuture', count_t * 4),
+        ("name", ctypes.c_char * 16),
+        ("rbyte", count_t),
+        ("rpack", count_t),
+        ("rerrs", count_t),
+        ("rdrop", count_t),
+        ("rfifo", count_t),
+        ("rframe", count_t),
+        ("rcompr", count_t),
+        ("rmultic", count_t),
+        ("rfuture", count_t * 4),
+        ("sbyte", count_t),
+        ("spack", count_t),
+        ("serrs", count_t),
+        ("sdrop", count_t),
+        ("sfifo", count_t),
+        ("scollis", count_t),
+        ("scarrier", count_t),
+        ("scompr", count_t),
+        ("sfuture", count_t * 4),
+        ("speed", ctypes.c_long),
+        ("duplex", ctypes.c_char),
+        ("cfuture", count_t * 4),
     ]
 
 
@@ -584,11 +569,11 @@ class IntfStat(ctypes.Structure):
     """
 
     _fields_ = [
-        ('nrintf', ctypes.c_int),
-        ('intf', PerIntf * MAXINTF),
+        ("nrintf", ctypes.c_int),
+        ("intf", PerIntf * MAXINTF),
     ]
     fields_limiters = {
-        'intf': 'nrintf',
+        "intf": "nrintf",
     }
 
 
@@ -601,11 +586,11 @@ class WWWStat(ctypes.Structure):
     """
 
     _fields_ = [
-        ('accesses', count_t),
-        ('totkbytes', count_t),
-        ('uptime', count_t),
-        ('bworkers', ctypes.c_int),
-        ('iworkers', ctypes.c_int),
+        ("accesses", count_t),
+        ("totkbytes", count_t),
+        ("uptime", count_t),
+        ("bworkers", ctypes.c_int),
+        ("iworkers", ctypes.c_int),
     ]
 
 
@@ -617,13 +602,12 @@ class SStat(ctypes.Structure):
     """
 
     _fields_ = [
-        ('cpu', CPUStat),
-        ('mem', MemStat),
-        ('net', NETStat),
-        ('intf', IntfStat),
-        ('dsk', DSKStat),
-
-        ('www', WWWStat),
+        ("cpu", CPUStat),
+        ("mem", MemStat),
+        ("net", NETStat),
+        ("intf", IntfStat),
+        ("dsk", DSKStat),
+        ("www", WWWStat),
     ]
 
 
@@ -636,27 +620,27 @@ class GEN(ctypes.Structure):
     """
 
     _fields_ = [
-        ('pid', ctypes.c_int),
-        ('ppid', ctypes.c_int),
-        ('ruid', ctypes.c_int),
-        ('euid', ctypes.c_int),
-        ('suid', ctypes.c_int),
-        ('fsuid', ctypes.c_int),
-        ('rgid', ctypes.c_int),
-        ('egid', ctypes.c_int),
-        ('sgid', ctypes.c_int),
-        ('fsgid', ctypes.c_int),
-        ('nthr', ctypes.c_int),
-        ('name', ctypes.c_char * (PNAMLEN + 1)),
-        ('state', ctypes.c_char),
-        ('excode', ctypes.c_int),
-        ('btime', time_t),
-        ('elaps', time_t),
-        ('cmdline', ctypes.c_char * (CMDLEN + 1)),
-        ('nthrslpi', ctypes.c_int),
-        ('nthrslpu', ctypes.c_int),
-        ('nthrrun', ctypes.c_int),
-        ('ifuture', ctypes.c_int * 1),
+        ("pid", ctypes.c_int),
+        ("ppid", ctypes.c_int),
+        ("ruid", ctypes.c_int),
+        ("euid", ctypes.c_int),
+        ("suid", ctypes.c_int),
+        ("fsuid", ctypes.c_int),
+        ("rgid", ctypes.c_int),
+        ("egid", ctypes.c_int),
+        ("sgid", ctypes.c_int),
+        ("fsgid", ctypes.c_int),
+        ("nthr", ctypes.c_int),
+        ("name", ctypes.c_char * (PNAMLEN + 1)),
+        ("state", ctypes.c_char),
+        ("excode", ctypes.c_int),
+        ("btime", time_t),
+        ("elaps", time_t),
+        ("cmdline", ctypes.c_char * (CMDLEN + 1)),
+        ("nthrslpi", ctypes.c_int),
+        ("nthrslpu", ctypes.c_int),
+        ("nthrrun", ctypes.c_int),
+        ("ifuture", ctypes.c_int * 1),
     ]
 
 
@@ -669,16 +653,16 @@ class CPU(ctypes.Structure):
     """
 
     _fields_ = [
-        ('utime', count_t),
-        ('stime', count_t),
-        ('nice', ctypes.c_int),
-        ('prio', ctypes.c_int),
-        ('rtprio', ctypes.c_int),
-        ('policy', ctypes.c_int),
-        ('curcpu', ctypes.c_int),
-        ('sleepavg', ctypes.c_int),
-        ('ifuture', ctypes.c_int * 4),
-        ('cfuture', count_t * 4),
+        ("utime", count_t),
+        ("stime", count_t),
+        ("nice", ctypes.c_int),
+        ("prio", ctypes.c_int),
+        ("rtprio", ctypes.c_int),
+        ("policy", ctypes.c_int),
+        ("curcpu", ctypes.c_int),
+        ("sleepavg", ctypes.c_int),
+        ("ifuture", ctypes.c_int * 4),
+        ("cfuture", count_t * 4),
     ]
 
 
@@ -691,12 +675,12 @@ class DSK(ctypes.Structure):
     """
 
     _fields_ = [
-        ('rio', count_t),
-        ('rsz', count_t),
-        ('wio', count_t),
-        ('wsz', count_t),
-        ('cwsz', count_t),
-        ('cfuture', count_t * 4),
+        ("rio", count_t),
+        ("rsz", count_t),
+        ("wio", count_t),
+        ("wsz", count_t),
+        ("cwsz", count_t),
+        ("cfuture", count_t * 4),
     ]
 
 
@@ -709,14 +693,14 @@ class MEM(ctypes.Structure):
     """
 
     _fields_ = [
-        ('minflt', count_t),
-        ('majflt', count_t),
-        ('shtext', count_t),
-        ('vmem', count_t),
-        ('rmem', count_t),
-        ('vgrow', count_t),
-        ('rgrow', count_t),
-        ('cfuture', count_t * 4),
+        ("minflt", count_t),
+        ("majflt", count_t),
+        ("shtext", count_t),
+        ("vmem", count_t),
+        ("rmem", count_t),
+        ("vgrow", count_t),
+        ("rgrow", count_t),
+        ("cfuture", count_t * 4),
     ]
 
 
@@ -729,17 +713,17 @@ class NET(ctypes.Structure):
     """
 
     _fields_ = [
-        ('tcpsnd', count_t),
-        ('tcpssz', count_t),
-        ('tcprcv', count_t),
-        ('tcprsz', count_t),
-        ('udpsnd', count_t),
-        ('udpssz', count_t),
-        ('udprcv', count_t),
-        ('udprsz', count_t),
-        ('rawsnd', count_t),
-        ('rawrcv', count_t),
-        ('cfuture', count_t * 4),
+        ("tcpsnd", count_t),
+        ("tcpssz", count_t),
+        ("tcprcv", count_t),
+        ("tcprsz", count_t),
+        ("udpsnd", count_t),
+        ("udpssz", count_t),
+        ("udprcv", count_t),
+        ("udprsz", count_t),
+        ("rawsnd", count_t),
+        ("rawrcv", count_t),
+        ("cfuture", count_t * 4),
     ]
 
 
@@ -751,11 +735,11 @@ class PStat(ctypes.Structure):
     """
 
     _fields_ = [
-        ('gen', GEN),
-        ('cpu', CPU),
-        ('dsk', DSK),
-        ('mem', MEM),
-        ('net', NET),
+        ("gen", GEN),
+        ("cpu", CPU),
+        ("dsk", DSK),
+        ("mem", MEM),
+        ("net", NET),
     ]
 
 
