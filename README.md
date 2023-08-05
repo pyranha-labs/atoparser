@@ -61,13 +61,15 @@ pip install dist/pyatop*.tar.gz
 ## Examples
 
 Read an ATOP log with the example JSON command:
-```
+```shell
 pyatop ~/atop.log -P CPU --pretty
 ```
 
 Iterate over the C structs as Python objects:  
-```
-with gzip.open(file, 'rb') as raw_file:
+```python
+from pyatop import atop_helpers
+
+with open(file, 'rb') as raw_file:
     header = atop_helpers.get_header(raw_file)
     for record, sstat, tstat in atop_helpers.generate_statistics(raw_file, header):
         total_cycles = record.interval * sstat.cpu.nrcpu * header.hertz
@@ -76,8 +78,11 @@ with gzip.open(file, 'rb') as raw_file:
 ```
 
 Convert the C structs into JSON compatible objects:  
-```
-with gzip.open(file, 'rb') as raw_file:
+```python
+import json
+from pyatop import atop_helpers
+
+with open(file, 'rb') as raw_file:
     header = atop_helpers.get_header(raw_file)
     print(json.dumps(atop_helpers.struct_to_dict(header), indent=2))
 ```
