@@ -26,8 +26,6 @@ from __future__ import annotations
 import ctypes
 import io
 import zlib
-
-from typing import Type
 from typing import Union
 
 from pyatop.structs import atop_126
@@ -45,26 +43,26 @@ SStat = Union[
     atop_126.SStat,
     atop_230.SStat,
 ]
-TStat = Union[
-    atop_126.TStat,
-    atop_230.TStat,
+TStat = Union[  # pylint: disable=invalid-name
+    atop_126.TStat,  # pylint: disable=invalid-name
+    atop_230.TStat,  # pylint: disable=invalid-name
 ]
 
 # Fallback to 1.26 if there is no custom class provided to attempt backwards compatibility.
 _DEFAULT_VERSION = 1.26
-_HEADER_BY_VERSION: dict[float, Type[Header]] = {
+_HEADER_BY_VERSION: dict[float, type[Header]] = {
     1.26: atop_126.Header,
     2.3: atop_230.Header,
 }
-_RECORD_BY_VERSION: dict[float, Type[Record]] = {
+_RECORD_BY_VERSION: dict[float, type[Record]] = {
     1.26: atop_126.Record,
     2.3: atop_230.Record,
 }
-_SSTAT_BY_VERSION: dict[float, Type[SStat]] = {
+_SSTAT_BY_VERSION: dict[float, type[SStat]] = {
     1.26: atop_126.SStat,
     2.3: atop_230.SStat,
 }
-_TSTAT_BY_VERSION: dict[float, Type[TStat]] = {
+_TSTAT_BY_VERSION: dict[float, type[TStat]] = {
     1.26: atop_126.TStat,
     2.3: atop_230.TStat,
 }
@@ -75,14 +73,14 @@ _TSTAT_BY_VERSION: dict[float, Type[TStat]] = {
 MAX_SAMPLES_PER_FILE = 86400
 
 # Definition from rawlog.c
-MAGIC = 0xfeedbeef
+MAGIC = 0xFEEDBEEF
 
 
 def generate_statistics(
-        raw_file: io.FileIO,
-        header: Header = None,
-        raise_on_truncation: bool = True,
-        max_samples: int = MAX_SAMPLES_PER_FILE,
+    raw_file: io.FileIO,
+    header: Header = None,
+    raise_on_truncation: bool = True,
+    max_samples: int = MAX_SAMPLES_PER_FILE,
 ) -> tuple[Record, SStat, list[TStat]]:
     """Read statistics groups from an open ATOP log file.
 
@@ -93,7 +91,7 @@ def generate_statistics(
         max_samples: Maximum number of samples read from a file.
 
     Yields:
-        record, devsstat, devtstats: The next statistic group after reading in raw bytes to objects.
+        The next record, devsstat, and devtstat statistic groups after reading in raw bytes to objects.
     """
     if header is None:
         # If a header was not provided, read up to the proper length and discard to ensure the correct starting offset.
@@ -128,10 +126,10 @@ def get_header(raw_file: io.FileIO) -> Header:
         raw_file: An open ATOP file capable of reading as bytes.
 
     Returns:
-        raw_header: The header at the beginning of an ATOP file.
+        The header at the beginning of an ATOP file.
 
     Raises:
-        ValueError: If there are not enough bytes to read the header, or the bytes were invalid.
+        ValueError if there are not enough bytes to read the header, or the bytes were invalid.
     """
     # Read the header directly into the struct, there is no padding to consume or add.
     # Use default Header as the baseline in order to check the version. It can be transferred without re-reading.
@@ -139,7 +137,7 @@ def get_header(raw_file: io.FileIO) -> Header:
     raw_file.readinto(header)
 
     if header.magic != MAGIC:
-        msg = f'File does not contain raw atop output (wrong magic number): {hex(header.magic)}'
+        msg = f"File does not contain raw atop output (wrong magic number): {hex(header.magic)}"
         raise ValueError(msg)
 
     header_version = header.semantic_version
@@ -154,9 +152,9 @@ def get_header(raw_file: io.FileIO) -> Header:
 
 
 def get_tstat(
-        raw_file: io.FileIO,
-        record: Record,
-        tstat_cls: Type[TStat],
+    raw_file: io.FileIO,
+    record: Record,
+    tstat_cls: type[TStat],
 ) -> list[TStat]:
     """Get the next raw tstat array from an open ATOP file.
 
@@ -166,10 +164,10 @@ def get_tstat(
         tstat_cls: TStat struct class to read the raw bytes into.
 
     Returns:
-        tstats: All TStat structs after a raw SStat, but before the next raw record.
+        All TStat structs after a raw SStat, but before the next raw record.
 
     Raises:
-        ValueError: If there are not enough bytes to read a stat array.
+        ValueError if there are not enough bytes to read a stat array.
     """
     # Read the requested length instead of the length of the struct.
     # The data is compressed and must be decompressed before it will fill the final list of structs.
@@ -191,7 +189,7 @@ def get_tstat(
     return tstats
 
 
-def get_record(raw_file: io.FileIO, record_cls: Type[Record]) -> Record:
+def get_record(raw_file: io.FileIO, record_cls: type[Record]) -> Record:
     """Get the next raw record from an open ATOP file.
 
     Args:
@@ -199,10 +197,10 @@ def get_record(raw_file: io.FileIO, record_cls: Type[Record]) -> Record:
         record_cls: Record struct class to read the raw bytes into.
 
     Returns:
-        record: A single record representing the data before an SStat struct.
+        A single record representing the data before an SStat struct.
 
     Raises:
-        ValueError: If there are not enough bytes to read a single record.
+        ValueError if there are not enough bytes to read a single record.
     """
     record = record_cls()
     raw_file.readinto(record)
@@ -210,9 +208,9 @@ def get_record(raw_file: io.FileIO, record_cls: Type[Record]) -> Record:
 
 
 def get_sstat(
-        raw_file: io.FileIO,
-        raw_record: Record,
-        sstat_cls: Type[SStat],
+    raw_file: io.FileIO,
+    raw_record: Record,
+    sstat_cls: type[SStat],
 ) -> SStat:
     """Get the next raw sstat from an open ATOP file.
 
@@ -222,10 +220,10 @@ def get_sstat(
         sstat_cls: SStat struct class to read the raw bytes into.
 
     Returns:
-        raw_record: A single struct representing the data after a raw record, but before an array of TStat structs.
+        A single struct representing the data after a raw record, but before an array of TStat structs.
 
     Raises:
-        ValueError: If there are not enough bytes to read a single stat.
+        ValueError if there are not enough bytes to read a single stat.
     """
     # Read the requested length instead of the length of the struct.
     # The data is compressed and must be decompressed before it will fill the struct.
@@ -244,7 +242,7 @@ def struct_to_dict(struct: ctypes.Structure) -> dict:
         struct: C struct loaded from raw ATOP file.
 
     Returns:
-        struct_dict: C struct converted into a dictionary using the names of the struct's fields as keys.
+        C struct converted into a dictionary using the names of the struct's fields as keys.
     """
     struct_dict = {}
     for field in struct._fields_:  # pylint: disable=protected-access
@@ -252,14 +250,14 @@ def struct_to_dict(struct: ctypes.Structure) -> dict:
         field_data = getattr(struct, field_name)
         if isinstance(field_data, ctypes.Structure):
             struct_dict[field_name] = struct_to_dict(field_data)
-        elif 'future' not in field_name:
+        elif "future" not in field_name:
             if isinstance(field_data, ctypes.Array):
                 struct_dict[field_name] = []
-                limiters = getattr(struct, 'fields_limiters', {})
+                limiters = getattr(struct, "fields_limiters", {})
                 limiter = limiters.get(field_name)
                 if limiter:
-                    field_data = field_data[:getattr(struct, limiter)]
-                for subdata in field_data[:getattr(struct, struct.fields_limiters.get(field_name))]:
+                    field_data = field_data[: getattr(struct, limiter)]
+                for subdata in field_data[: getattr(struct, struct.fields_limiters.get(field_name))]:
                     struct_dict[field_name].append(struct_to_dict(subdata))
             elif isinstance(field_data, bytes):
                 struct_dict[field_name] = field_data.decode()
