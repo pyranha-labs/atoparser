@@ -77,7 +77,7 @@ MAGIC = 0xFEEDBEEF
 
 
 def generate_statistics(
-    raw_file: io.FileIO,
+    raw_file: io.BytesIO,
     header: Header = None,
     raise_on_truncation: bool = True,
     max_samples: int = MAX_SAMPLES_PER_FILE,
@@ -119,7 +119,7 @@ def generate_statistics(
             raise
 
 
-def get_header(raw_file: io.FileIO) -> Header:
+def get_header(raw_file: io.BytesIO) -> Header:
     """Get the raw file header from an open ATOP file.
 
     Args:
@@ -152,7 +152,7 @@ def get_header(raw_file: io.FileIO) -> Header:
 
 
 def get_tstat(
-    raw_file: io.FileIO,
+    raw_file: io.BytesIO,
     record: Record,
     tstat_cls: type[TStat],
 ) -> list[TStat]:
@@ -189,7 +189,7 @@ def get_tstat(
     return tstats
 
 
-def get_record(raw_file: io.FileIO, record_cls: type[Record]) -> Record:
+def get_record(raw_file: io.BytesIO, record_cls: type[Record]) -> Record:
     """Get the next raw record from an open ATOP file.
 
     Args:
@@ -208,7 +208,7 @@ def get_record(raw_file: io.FileIO, record_cls: type[Record]) -> Record:
 
 
 def get_sstat(
-    raw_file: io.FileIO,
+    raw_file: io.BytesIO,
     raw_record: Record,
     sstat_cls: type[SStat],
 ) -> SStat:
