@@ -23,6 +23,41 @@ For full information on the amazing performance monitoring software that creates
 [ATOP - The one stop shop for all your tops](https://www.atoptool.nl/)
 
 
+## Table Of Contents
+
+  * [Compatibility](#compatibility)
+  * [Getting Started](#getting-started)
+    * [Installation](#installation)
+  * [Examples](#examples)
+
+
+## Compatibility
+- Supports ATOP 1.26 and 2.30, but may work with other versions.
+
+
+## Getting Started
+
+### Installation
+
+Install PyAtop via git clone:
+```shell
+git clone <path to fork>
+cd pyatop
+pip install .
+```
+
+Or build and install from wheel:
+```shell
+# Build locally.
+git clone <path to fork>
+cd pyatop
+make wheel
+
+# Push dist/pyatop*.tar.gz to environment where it will be installed.
+pip install dist/pyatop*.tar.gz
+```
+
+
 ## Examples
 
 Read an ATOP log with the example JSON command:
@@ -46,6 +81,3 @@ with gzip.open(file, 'rb') as raw_file:
     header = atop_helpers.get_header(raw_file)
     print(json.dumps(atop_helpers.struct_to_dict(header), indent=2))
 ```
-
-## Limitations
-- Supports ATOP 1.26 and 2.30, but may work with other versions.
