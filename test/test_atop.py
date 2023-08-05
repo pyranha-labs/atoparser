@@ -2,6 +2,7 @@
 
 import io
 import zlib
+from typing import Callable
 
 import pytest
 
@@ -21,7 +22,7 @@ TEST_CASES = {
             "args": [
                 io.BytesIO(HEADER_BYTES),
             ],
-            "expected_result": {
+            "returns": {
                 "magic": 4276993775,
                 "aversion": 33050,
                 "future1": 0,
@@ -57,7 +58,7 @@ TEST_CASES = {
                 io.BytesIO(HEADER_BYTES + RECORD_BYTES),
                 atop_126_structs.Record,
             ],
-            "expected_result": {
+            "returns": {
                 "curtime": 1556245087,
                 "flags": 0,
                 "interval": 60,
@@ -77,7 +78,7 @@ TEST_CASES = {
                 io.BytesIO(HEADER_BYTES + RECORD_BYTES[:16]),
                 atop_126_structs.Record,
             ],
-            "expected_result": {
+            "returns": {
                 "curtime": 1556245087,
                 "flags": 0,
                 "interval": 0,
@@ -99,7 +100,7 @@ TEST_CASES = {
                 io.BytesIO(HEADER_BYTES + RECORD_BYTES + SSTAT_BYTES),
                 None,
             ],
-            "expected_result": {
+            "returns": {
                 "cpu": {
                     "lavg15": 0.25,
                     "nrcpu": 8,
@@ -159,19 +160,19 @@ TEST_CASES = {
     "header_check_compatibility": {
         "1.26": {
             "args": [atop_helpers.get_header(io.BytesIO(HEADER_BYTES))],
-            "expected_result": None,
+            "returns": None,
         },
     },
     "header_semantic_version": {
         "1.26": {
             "args": [atop_helpers.get_header(io.BytesIO(HEADER_BYTES))],
-            "expected_result": 1.26,
+            "returns": 1.26,
         },
     },
     "struct_to_dict": {
         "1.26": {
             "args": [atop_helpers.get_header(io.BytesIO(HEADER_BYTES))],
-            "expected_result": {
+            "returns": {
                 "aversion": 33050,
                 "hertz": 100,
                 "magic": 4276993775,
@@ -296,48 +297,19 @@ def _sstat_to_dict(sstat: atop_126_structs.SStat) -> dict:
     return sstat_map
 
 
-def run_basic_test_case(test_case: dict, context: callable, comparator: callable = None) -> None:
-    """Run a basic test_case configuration against the given context.
-
-    Args:
-        test_case: A dictionary containing configuration parameters for testing a callable.
-        context: A callable to pass args and kwargs that will return value to compare.
-        comparator: A function to use for comparing the expected_results and result.
-            Defaults to doing a direct "==" comparison.
-
-    Example:
-        test_case (test raising an error) = {'raises': ValueError, 'kwargs': {'value': None}}
-        test_case (test getting expected result) = {'expected_result': 10, 'args': [5, 12]}
-    """
-    args = test_case.get("args", [])
-    kwargs = test_case.get("kwargs", {})
-    raises = test_case.get("raises")
-    if raises:
-        with pytest.raises(raises):
-            context(*args, **kwargs)
-    else:
-        expected_result = test_case.get("expected_result")
-        result = context(*args, **kwargs)
-        message = f'Got an unexpected result.\n\nExpected: "{expected_result}"\n\nActual: "{result}"'
-        if comparator:
-            comparator(result, expected_result)
-        else:
-            assert result == expected_result, message
-
-
 @pytest.mark.parametrize(
     "test_case",
     list(TEST_CASES["get_header"].values()),
     ids=list(TEST_CASES["get_header"].keys()),
 )
-def test_get_header(test_case: dict) -> None:
+def test_get_header(test_case: dict, function_tester: Callable) -> None:
     """Unit tests for get_header."""
 
-    def comparison_method(result: atop_126_structs.Header, expected_result: dict) -> None:
-        """Manual comparison method to convert header into dict."""
-        assert _header_to_dict(result) == expected_result
+    def _get_header(raw_file: io.BytesIO) -> dict:
+        """Manual read method to convert header into dict for tests."""
+        return _header_to_dict(atop_helpers.get_header(raw_file))
 
-    run_basic_test_case(test_case, atop_helpers.get_header, comparator=comparison_method)
+    function_tester(test_case, _get_header)
 
 
 @pytest.mark.parametrize(
@@ -345,16 +317,16 @@ def test_get_header(test_case: dict) -> None:
     list(TEST_CASES["get_record"].values()),
     ids=list(TEST_CASES["get_record"].keys()),
 )
-def test_get_record(test_case: dict) -> None:
+def test_get_record(test_case: dict, function_tester: Callable) -> None:
     """Unit tests for get_record."""
 
-    def comparison_method(result: atop_126_structs.Record, expected_result: dict) -> None:
-        """Manual comparison method to convert record into dict."""
-        assert _record_to_dict(result) == expected_result
+    def _get_record(raw_file: io.BytesIO, record_cls: type[atop_126_structs.Record]) -> dict:
+        """Manual read method to convert record into dict for tests."""
+        return _record_to_dict(atop_helpers.get_record(raw_file, record_cls))
 
     # Read the header to ensure the offset is correct prior to reading the record:
     atop_helpers.get_header(test_case["args"][0])
-    run_basic_test_case(test_case, atop_helpers.get_record, comparator=comparison_method)
+    function_tester(test_case, _get_record)
 
 
 @pytest.mark.parametrize(
@@ -362,21 +334,15 @@ def test_get_record(test_case: dict) -> None:
     list(TEST_CASES["get_sstat"].values()),
     ids=list(TEST_CASES["get_sstat"].keys()),
 )
-def test_get_sstat(test_case: dict) -> None:
+def test_get_sstat(test_case: dict, function_tester: Callable) -> None:
     """Unit tests for get_sstat."""
-
-    def comparison_method(result: atop_126_structs.SStat, expected_result: dict) -> None:
-        """Manual comparison method to convert sstat into dict."""
-        assert _sstat_to_dict(result) == expected_result
-
-    # Read the header and record to ensure the offset is correct prior to reading the record:
-    header = atop_helpers.get_header(test_case["args"][0])
+    # Read the header and record to ensure the offset is correct prior to reading the stats:
+    atop_helpers.get_header(test_case["args"][0])
     record = atop_helpers.get_record(test_case["args"][0], atop_126_structs.Record)
-    run_basic_test_case(
-        test_case=test_case,
+    function_tester(
+        test_case,
         # Pass in the record that was read from the file since it cannot be declared beforehand
-        context=lambda raw_file, _: atop_helpers.get_sstat(raw_file, record, atop_126_structs.SStat),
-        comparator=comparison_method,
+        lambda raw_file, _: _sstat_to_dict(atop_helpers.get_sstat(raw_file, record, atop_126_structs.SStat)),
     )
 
 
@@ -385,9 +351,9 @@ def test_get_sstat(test_case: dict) -> None:
     list(TEST_CASES["header_check_compatibility"].values()),
     ids=list(TEST_CASES["header_check_compatibility"].keys()),
 )
-def test_header_check_compatibility(test_case: dict) -> None:
+def test_header_check_compatibility(test_case: dict, function_tester: Callable) -> None:
     """Unit tests for header check_compatibility."""
-    run_basic_test_case(test_case, test_case["args"][0].__class__.check_compatibility)
+    function_tester(test_case, test_case["args"][0].__class__.check_compatibility)
 
 
 @pytest.mark.parametrize(
@@ -395,9 +361,9 @@ def test_header_check_compatibility(test_case: dict) -> None:
     list(TEST_CASES["header_semantic_version"].values()),
     ids=list(TEST_CASES["header_semantic_version"].keys()),
 )
-def test_header_semantic_version(test_case: dict) -> None:
+def test_header_semantic_version(test_case: dict, function_tester: Callable) -> None:
     """Unit tests for header semantic_version."""
-    run_basic_test_case(test_case, lambda self: self.semantic_version)
+    function_tester(test_case, lambda self: self.semantic_version)
 
 
 @pytest.mark.parametrize(
@@ -415,6 +381,6 @@ def test_parseable_map(parseable: str) -> None:
     list(TEST_CASES["struct_to_dict"].values()),
     ids=list(TEST_CASES["struct_to_dict"].keys()),
 )
-def test_struct_to_dict(test_case: dict) -> None:
+def test_struct_to_dict(test_case: dict, function_tester: Callable) -> None:
     """Unit test to verify conversion of C structs into basic dicts."""
-    run_basic_test_case(test_case, atop_helpers.struct_to_dict)
+    function_tester(test_case, atop_helpers.struct_to_dict)
