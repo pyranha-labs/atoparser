@@ -8,6 +8,3 @@ exclude_dirs:
 
 targets:
   - pyatop
-
-skips:
-  - B101
