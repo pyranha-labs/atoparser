@@ -17,7 +17,7 @@ venv:
 	$(PYTHON_BIN) -m venv $(GIT_DIR)/.venv && \
 	source $(GIT_DIR)/.venv/bin/activate && \
 	pip install -r requirements-dev.txt && \
-	echo $(GIT_DIR) > .venv/lib/python3.10/site-packages/pyatop.pth
+	echo $(GIT_DIR) > .venv/lib/$(PYTHON_BIN)/site-packages/$(NAME).pth
 
 
 ##### Quality Assurance #####
@@ -72,4 +72,4 @@ wheel:
 # Clean the packages from all builds.
 .PHONY: clean
 clean:
-	rm -r $(GIT_DIR)/dist $(GIT_DIR)/pyatop.egg-info
+	rm -r $(GIT_DIR)/dist $(GIT_DIR)/$(NAME).egg-info
