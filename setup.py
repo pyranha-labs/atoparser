@@ -37,10 +37,10 @@ setup(
     long_description_content_type="text/markdown",
     version=_find_version("pyatop"),
     author="David Fritz",
-    url="https://github.com/dfrtz/pyatop",
+    url="https://github.com/pyranha-labs/pyatop",
     project_urls={
-        "Issue Tracker": "https://github.com/dfrtz/pyatop/issues",
-        "Source Code": "https://github.com/dfrtz/pyatop",
+        "Issue Tracker": "https://github.com/pyranha-labs/pyatop/issues",
+        "Source Code": "https://github.com/pyranha-labs/pyatop",
     },
     license="MIT",
     classifiers=[
