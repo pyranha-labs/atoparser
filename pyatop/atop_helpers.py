@@ -28,44 +28,44 @@ import io
 import zlib
 from typing import Union
 
-from pyatop.structs import atop_126
-from pyatop.structs import atop_230
+from pyatop.structs import atop_1_26
+from pyatop.structs import atop_2_3
 
 Header = Union[
-    atop_126.Header,
-    atop_230.Header,
+    atop_1_26.Header,
+    atop_2_3.Header,
 ]
 Record = Union[
-    atop_126.Record,
-    atop_230.Record,
+    atop_1_26.Record,
+    atop_2_3.Record,
 ]
 SStat = Union[
-    atop_126.SStat,
-    atop_230.SStat,
+    atop_1_26.SStat,
+    atop_2_3.SStat,
 ]
 TStat = Union[  # pylint: disable=invalid-name
-    atop_126.TStat,  # pylint: disable=invalid-name
-    atop_230.TStat,  # pylint: disable=invalid-name
+    atop_1_26.TStat,
+    atop_2_3.TStat,
 ]
 
-# Fallback to 1.26 if there is no custom class provided to attempt backwards compatibility.
-_DEFAULT_VERSION = 1.26
-_HEADER_BY_VERSION: dict[float, type[Header]] = {
-    1.26: atop_126.Header,
-    2.3: atop_230.Header,
+_HEADER_BY_VERSION: dict[str, type[Header]] = {
+    "1.26": atop_1_26.Header,
+    "2.3": atop_2_3.Header,
 }
-_RECORD_BY_VERSION: dict[float, type[Record]] = {
-    1.26: atop_126.Record,
-    2.3: atop_230.Record,
+_RECORD_BY_VERSION: dict[str, type[Record]] = {
+    "1.26": atop_1_26.Record,
+    "2.3": atop_2_3.Record,
 }
-_SSTAT_BY_VERSION: dict[float, type[SStat]] = {
-    1.26: atop_126.SStat,
-    2.3: atop_230.SStat,
+_SSTAT_BY_VERSION: dict[str, type[SStat]] = {
+    "1.26": atop_1_26.SStat,
+    "2.3": atop_2_3.SStat,
 }
-_TSTAT_BY_VERSION: dict[float, type[TStat]] = {
-    1.26: atop_126.TStat,
-    2.3: atop_230.TStat,
+_TSTAT_BY_VERSION: dict[str, type[TStat]] = {
+    "1.26": atop_1_26.TStat,
+    "2.3": atop_2_3.TStat,
 }
+# Fallback to latest if there is no custom class provided to attempt backwards compatibility.
+_DEFAULT_VERSION = list(_HEADER_BY_VERSION.keys())[-1]
 
 # Default ATOP sample is once per minute, but it can be manually increased/decreased.
 # Additionally, logs may not rollover as expected, combining multiple hours into 1 log.
@@ -119,11 +119,12 @@ def generate_statistics(
             raise
 
 
-def get_header(raw_file: io.BytesIO) -> Header:
+def get_header(raw_file: io.BytesIO, check_compatibility: bool = True) -> Header:
     """Get the raw file header from an open ATOP file.
 
     Args:
         raw_file: An open ATOP file capable of reading as bytes.
+        check_compatibility: Whether to enforce compatibility check against supported versions on header creation.
 
     Returns:
         The header at the beginning of an ATOP file.
@@ -145,8 +146,9 @@ def get_header(raw_file: io.BytesIO) -> Header:
         # Header byte length is consistent across versions. Transfer the initial read into the versioned header.
         header = _HEADER_BY_VERSION[header_version].from_buffer(header)
 
-    # Ensure all struct lengths match the lengths specific in the header. If not, we cannot read the file further.
-    header.check_compatibility()
+    if check_compatibility:
+        # Ensure all struct lengths match the lengths specified in the header. If not, we cannot read the file further.
+        header.check_compatibility()
 
     return header
 
@@ -176,7 +178,7 @@ def get_tstat(
 
     # The final decompressed data is an array of structs, with the length determined by the raw record.
     uncompressed_len = ctypes.sizeof(tstat_cls)
-    record_count = record.nlist if isinstance(record, atop_126.Record) else record.ndeviat
+    record_count = record.nlist if isinstance(record, atop_1_26.Record) else record.ndeviat
     tstats = []
     for index in range(record_count):
         # Reconstruct one TStat struct for every possible byte chunk, incrementing the offset each pass. For example:

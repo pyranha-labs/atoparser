@@ -5,11 +5,11 @@ import gzip
 import json
 
 from pyatop import atop_helpers
-from pyatop.parsers import atop_126
+from pyatop.parsers import atop_1_26
 
 PARSEABLES = ["cpu", "CPL", "CPU", "DSK", "LVM", "MDD", "MEM", "NETL", "NETU", "PAG", "PRC", "PRG", "PRM", "PRN", "SWP"]
 PARSEABLE_MAP = {
-    1.26: {parseable: getattr(atop_126, f"parse_{parseable}") for parseable in PARSEABLES},
+    "1.26": {parseable: getattr(atop_1_26, f"parse_{parseable}") for parseable in PARSEABLES},
 }
 
 
@@ -43,7 +43,7 @@ def main() -> None:
         opener = open if ".gz" not in file else gzip.open
         with opener(file, "rb") as raw_file:
             header = atop_helpers.get_header(raw_file)
-            parsers = PARSEABLE_MAP.get(header.semantic_version, PARSEABLE_MAP[1.26])
+            parsers = PARSEABLE_MAP.get(header.semantic_version, PARSEABLE_MAP["1.26"])
             for record, sstat, tstat in atop_helpers.generate_statistics(raw_file, header, raise_on_truncation=False):
                 for parseable in args.parseables:
                     for sample in parsers[parseable](header, record, sstat, tstat):
