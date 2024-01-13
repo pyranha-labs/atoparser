@@ -109,27 +109,29 @@ class Header(ctypes.Structure):
             ValueError if not compatible.
         """
         compatible = [
-            self.sstatlen == ctypes.sizeof(SStat),
-            self.pstatlen == ctypes.sizeof(PStat),
             self.rawheadlen == ctypes.sizeof(Header),
             self.rawreclen == ctypes.sizeof(Record),
+            self.sstatlen == ctypes.sizeof(SStat),
+            self.pstatlen == ctypes.sizeof(PStat),
         ]
         if not all(compatible):
             raise ValueError(f"File has incompatible atop format. Struct length evaluations: {compatible}")
 
     @property
-    def semantic_version(self) -> float:
+    def semantic_version(self) -> str:
         """Convert the raw version into a semantic version.
 
         Returns:
-            version: The final major.minor version from the header aversion.
+            The final major.minor version from the header aversion.
+                Atop releases have "maintenance" versions, but they do not impact the header or file structure.
+                i.e., 1.26.1 is the same as 1.26.
         """
         # Use a general getattr() call to ensure the instance can always set the attribute even on first call.
         # C structs have various ways of creating instances, so __init__ is not always called to set up attributes.
         if not getattr(self, "_version", None):
             major = (self.aversion >> 8) & 0x7F
             minor = self.aversion & 0xFF
-            self._version = float(f"{major}.{minor}")  # pylint: disable=attribute-defined-outside-init
+            self._version = f"{major}.{minor}"  # pylint: disable=attribute-defined-outside-init
         return self._version
 
 

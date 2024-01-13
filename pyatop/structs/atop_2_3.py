@@ -10,12 +10,12 @@ Struct ordering and visual whitespace in the _fields_ are left to help match the
 If structs match exactly from a previous version, they are reused via aliasing.
 
 See https://github.com/Atoptool/atop for more information and references to the C process source code.
-Using schemas and structs from ATOP 2.30.
+Using schemas and structs from ATOP 2.3.
 """
 
 import ctypes
 
-from pyatop.structs import atop_126
+from pyatop.structs import atop_1_26
 
 # Disable the following pylint warnings to allow the variables and classes to match the style from the C.
 # This helps with maintainability and cross-referencing.
@@ -49,7 +49,7 @@ MAXNFSMOUNT = 64
 MAXDKNAM = 32
 
 
-UTSName = atop_126.UTSName
+UTSName = atop_1_26.UTSName
 
 
 class Header(ctypes.Structure):
@@ -99,27 +99,29 @@ class Header(ctypes.Structure):
             ValueError if not compatible.
         """
         compatible = [
-            self.sstatlen == ctypes.sizeof(SStat),
-            self.tstatlen == ctypes.sizeof(TStat),
             self.rawheadlen == ctypes.sizeof(Header),
             self.rawreclen == ctypes.sizeof(Record),
+            self.sstatlen == ctypes.sizeof(SStat),
+            self.tstatlen == ctypes.sizeof(TStat),
         ]
         if not all(compatible):
             raise ValueError(f"File has incompatible atop format. Struct length evaluations: {compatible}")
 
     @property
-    def semantic_version(self) -> float:
+    def semantic_version(self) -> str:
         """Convert the raw version into a semantic version.
 
         Returns:
-            version: The final major.minor version from the header aversion.
+            The final major.minor version from the header aversion.
+                Atop releases have "maintenance" versions, but they do not impact the header or file structure.
+                i.e., 2.3.1 is the same as 2.3.
         """
         # Use a general getattr() call to ensure the instance can always set the attribute even on first call.
         # C structs have various ways of creating instances, so __init__ is not always called to set up attributes.
         if not getattr(self, "_version", None):
             major = (self.aversion >> 8) & 0x7F
             minor = self.aversion & 0xFF
-            self._version = float(f"{major}.{minor}")  # pylint: disable=attribute-defined-outside-init
+            self._version = f"{major}.{minor}"  # pylint: disable=attribute-defined-outside-init
         return self._version
 
 
@@ -206,7 +208,7 @@ class MemStat(ctypes.Structure):
     ]
 
 
-FreqCnt = atop_126.FreqCnt
+FreqCnt = atop_1_26.FreqCnt
 
 
 class PerCPU(ctypes.Structure):
@@ -489,31 +491,31 @@ class ContStat(ctypes.Structure):
     }
 
 
-WWWStat = atop_126.WWWStat
+WWWStat = atop_1_26.WWWStat
 
 
-IPv4Stats = atop_126.IPv4Stats
+IPv4Stats = atop_1_26.IPv4Stats
 
 
-ICMPv4Stats = atop_126.ICMPv4Stats
+ICMPv4Stats = atop_1_26.ICMPv4Stats
 
 
-UDPv4Stats = atop_126.UDPv4Stats
+UDPv4Stats = atop_1_26.UDPv4Stats
 
 
-TCPStats = atop_126.TCPStats
+TCPStats = atop_1_26.TCPStats
 
 
-IPv6Stats = atop_126.IPv6Stats
+IPv6Stats = atop_1_26.IPv6Stats
 
 
-ICMPv6Stats = atop_126.ICMPv6Stats
+ICMPv6Stats = atop_1_26.ICMPv6Stats
 
 
-UDPv6Stats = atop_126.UDPv6Stats
+UDPv6Stats = atop_1_26.UDPv6Stats
 
 
-NETStat = atop_126.NETStat
+NETStat = atop_1_26.NETStat
 
 
 class SStat(ctypes.Structure):
@@ -573,10 +575,10 @@ class GEN(ctypes.Structure):
     ]
 
 
-CPU = atop_126.CPU
+CPU = atop_1_26.CPU
 
 
-DSK = atop_126.DSK
+DSK = atop_1_26.DSK
 
 
 class MEM(ctypes.Structure):

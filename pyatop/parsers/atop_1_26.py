@@ -1,7 +1,7 @@
 """Parser function used to convert ATOP structs in 1.26 into "parseable" output based on the signature name."""
 
 from pyatop import atop_helpers
-from pyatop.structs import atop_126
+from pyatop.structs import atop_1_26
 
 # Disable the following pylint warnings to allow functions to match a consistent type across all parseables.
 # This helps simplify calls allow dynamic function lookups to have consistent input arguments.
@@ -283,8 +283,8 @@ def parse_PRD(
             "pid": stat.gen.pid,
             "name": stat.gen.name.decode(),
             "state": stat.gen.state.decode(),
-            "kernel_patch": "y" if header.supportflags & atop_126.PATCHSTAT else "n",
-            "standard_io": "y" if header.supportflags & atop_126.IOSTAT else "n",
+            "kernel_patch": "y" if header.supportflags & atop_1_26.PATCHSTAT else "n",
+            "standard_io": "y" if header.supportflags & atop_1_26.IOSTAT else "n",
             "reads": stat.dsk.rio,
             "read_sectors": stat.dsk.rsz,
             "writes": stat.dsk.wio,
@@ -370,7 +370,7 @@ def parse_PRN(
             "pid": stat.gen.pid,
             "name": stat.gen.name.decode(),
             "state": stat.gen.state.decode(),
-            "kernel_patch": "y" if header.supportflags & atop_126.PATCHSTAT else "n",
+            "kernel_patch": "y" if header.supportflags & atop_1_26.PATCHSTAT else "n",
             "tcp_transmitted": stat.net.tcpsnd,
             "tcp_transmitted_size": stat.net.tcpssz,
             "tcp_received": stat.net.tcprcv,
