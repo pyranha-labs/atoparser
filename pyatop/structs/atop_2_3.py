@@ -16,6 +16,7 @@ Using schemas and structs from Atop 2.3.
 import ctypes
 
 from pyatop.structs import atop_1_26
+from pyatop.structs.shared import HeaderMixin
 from pyatop.structs.shared import UTSName
 from pyatop.structs.shared import count_t
 from pyatop.structs.shared import time_t
@@ -46,7 +47,7 @@ MAXNFSMOUNT = 64
 MAXDKNAM = 32
 
 
-class Header(ctypes.Structure):
+class Header(ctypes.Structure, HeaderMixin):
     """Top level struct to describe information about the system running ATOP and the log file itself.
 
     Field descriptions from atop:
@@ -92,31 +93,14 @@ class Header(ctypes.Structure):
         Raises:
             ValueError if not compatible.
         """
-        compatible = [
-            self.rawheadlen == ctypes.sizeof(Header),
-            self.rawreclen == ctypes.sizeof(Record),
-            self.sstatlen == ctypes.sizeof(SStat),
-            self.tstatlen == ctypes.sizeof(TStat),
+        sizes = [
+            (self.rawheadlen, ctypes.sizeof(Header)),
+            (self.rawreclen, ctypes.sizeof(Record)),
+            (self.sstatlen, ctypes.sizeof(SStat)),
+            (self.tstatlen, ctypes.sizeof(TStat)),
         ]
-        if not all(compatible):
-            raise ValueError(f"File has incompatible atop format. Struct length evaluations: {compatible}")
-
-    @property
-    def semantic_version(self) -> str:
-        """Convert the raw version into a semantic version.
-
-        Returns:
-            The final major.minor version from the header aversion.
-                Atop releases have "maintenance" versions, but they do not impact the header or file structure.
-                i.e., 2.3.1 is the same as 2.3.
-        """
-        # Use a general getattr() call to ensure the instance can always set the attribute even on first call.
-        # C structs have various ways of creating instances, so __init__ is not always called to set up attributes.
-        if not getattr(self, "_version", None):
-            major = (self.aversion >> 8) & 0x7F
-            minor = self.aversion & 0xFF
-            self._version = f"{major}.{minor}"  # pylint: disable=attribute-defined-outside-init
-        return self._version
+        if any(size[0] != size[1] for size in sizes):
+            raise ValueError(f"File has incompatible Atop format. Struct length evaluations (found, expected): {sizes}")
 
 
 class Record(ctypes.Structure):
@@ -624,7 +608,7 @@ class NET(ctypes.Structure):
 
 
 class TStat(ctypes.Structure):
-    """Top level struct to describe multiple statistics categories per task/process.
+    """Top level struct to describe multiple statistic categories per task/process.
 
     C Name: tstat
     C Location: photoproc.h
