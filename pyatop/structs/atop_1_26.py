@@ -1,4 +1,4 @@
-"""Structs and definitions used serialize/deserialize ATOP statistics directly from log files.
+"""Structs and definitions used serialize/deserialize Atop statistics directly from log files.
 
 Structs are declared in a way that will help provide as close to a 1 to 1 match as possible for debuggability
 and maintenance. The _fields_ of every struct match their original name, however the struct names have been updated
@@ -6,30 +6,27 @@ to match python CamelCase standards. Each struct includes the following to help 
     C Name: utsname
     C Location: sys/utsname.h
 
-Visual whitespace in the _fields_ are also left to help match the original source in readability.
+Struct ordering matches the C source to help with comparisons.
 
 See https://github.com/Atoptool/atop for more information and references to the C process source code.
-Using schemas and structs from ATOP 1.26.
+Using schemas and structs from Atop 1.26.
 """
 
 import ctypes
+
+from pyatop.structs.shared import UTSName
+from pyatop.structs.shared import count_t
+from pyatop.structs.shared import time_t
 
 # Disable the following pylint warnings to allow the variables and classes to match the style from the C.
 # This helps with maintainability and cross-referencing.
 # pylint: disable=invalid-name,too-few-public-methods
 
-# Definitions from time.h
-time_t = ctypes.c_long
-
 # Definitions from atop.h
-count_t = ctypes.c_longlong
 ACCTACTIVE = 0x00000001
 PATCHSTAT = 0x00000002
 IOSTAT = 0x00000004
 PATCHACCT = 0x00000008
-
-# Definitions from sys/types.h
-off_t = ctypes.c_long
 
 # Definitions from photoproc.h
 PNAMLEN = 15
@@ -42,24 +39,6 @@ MAXLVM = 256
 MAXMDD = 128
 MAXDKNAM = 32
 MAXINTF = 32
-
-
-class UTSName(ctypes.Structure):
-    """Struct to describe basic system information.
-
-    C Name: utsname
-    C Location: sys/utsname.h
-    """
-
-    _fields_ = [
-        # Standard GNU length is 64 characters + null terminator
-        ("sysname", ctypes.c_char * 65),
-        ("nodename", ctypes.c_char * 65),
-        ("release", ctypes.c_char * 65),
-        ("version", ctypes.c_char * 65),
-        ("machine", ctypes.c_char * 65),
-        ("domain", ctypes.c_char * 65),
-    ]
 
 
 class Header(ctypes.Structure):

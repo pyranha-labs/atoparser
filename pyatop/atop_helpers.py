@@ -109,6 +109,9 @@ def generate_statistics(
             # 2. SStats: System statistics.
             # 3. TStats: Task/process statistics.
             record = get_record(raw_file, record_cls)
+            if record.scomplen <= 0:
+                # Natural end-of-file, no further bytes were found to populate another record.
+                break
             devsstat = get_sstat(raw_file, record, sstat_cls)
             devtstats = get_tstat(raw_file, record, tstat_cls)
             yield record, devsstat, devtstats

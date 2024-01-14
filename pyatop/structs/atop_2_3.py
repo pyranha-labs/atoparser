@@ -1,4 +1,4 @@
-"""Structs and definitions used serialize/deserialize ATOP statistics directly from log files.
+"""Structs and definitions used serialize/deserialize Atop statistics directly from log files.
 
 Structs are declared in a way that will help provide as close to a 1 to 1 match as possible for debuggability
 and maintenance. The _fields_ of every struct match their original name, however the struct names have been updated
@@ -6,33 +6,30 @@ to match python CamelCase standards. Each struct includes the following to help 
     C Name: utsname
     C Location: sys/utsname.h
 
-Struct ordering and visual whitespace in the _fields_ are left to help match the original source in readability.
+Struct ordering matches the C source to help with comparisons.
 If structs match exactly from a previous version, they are reused via aliasing.
 
 See https://github.com/Atoptool/atop for more information and references to the C process source code.
-Using schemas and structs from ATOP 2.3.
+Using schemas and structs from Atop 2.3.
 """
 
 import ctypes
 
 from pyatop.structs import atop_1_26
+from pyatop.structs.shared import UTSName
+from pyatop.structs.shared import count_t
+from pyatop.structs.shared import time_t
 
 # Disable the following pylint warnings to allow the variables and classes to match the style from the C.
 # This helps with maintainability and cross-referencing.
 # pylint: disable=invalid-name,too-few-public-methods
 
-# Definitions from time.h
-time_t = ctypes.c_long
-
 # Definitions from atop.h
-count_t = ctypes.c_longlong
 ACCTACTIVE = 0x00000001
-PATCHSTAT = 0x00000002
 IOSTAT = 0x00000004
-PATCHACCT = 0x00000008
-
-# Definitions from sys/types.h
-off_t = ctypes.c_long
+NETATOP = 0x00000010
+NETATOPD = 0x00000020
+DOCKSTAT = 0x00000040
 
 # Definitions from photoproc.h
 PNAMLEN = 15
@@ -47,9 +44,6 @@ MAXINTF = 128
 MAXCONTAINER = 128
 MAXNFSMOUNT = 64
 MAXDKNAM = 32
-
-
-UTSName = atop_1_26.UTSName
 
 
 class Header(ctypes.Structure):
@@ -363,7 +357,7 @@ class PerNFSMount(ctypes.Structure):
     """
 
     _fields_ = [
-        ("name", ctypes.c_char * 128),
+        ("mountdev", ctypes.c_char * 128),
         ("age", count_t),
         ("bytesread", count_t),
         ("byteswrite", count_t),
@@ -433,10 +427,10 @@ class NFSMounts(ctypes.Structure):
 
     _fields_ = [
         ("nrmounts", ctypes.c_int),
-        ("pernfsmount", PerNFSMount * MAXNFSMOUNT),
+        ("nfsmnt", PerNFSMount * MAXNFSMOUNT),
     ]
     fields_limiters = {
-        "pernfsmount": "nrmounts",
+        "nfsmnt": "nrmounts",
     }
 
 
