@@ -15,12 +15,13 @@
 
 # PyAtop
 
-PyAtop is a native python ATOP log processing library. The library supports reading the binary C structs directly from
-saved ATOP log files, without the need to call a subprocess, or even install ATOP. The converted data contains
-structured python objects, that can then be used for JSON, CSV, or other types of output, storage, and analysis.
+PyAtop is a zero dependency Atop log processing library written in Python. The library supports reading binary C data
+directly from compressed or uncompressed Atop log files, without the need to install Atop or call a subprocess.
+The converted data contains structured Python objects, that can then be used for JSON, CSV, or other types of output,
+storage, and analysis.
 
-For full information on the amazing performance monitoring software that creates these files, known as ATOP, refer to:  
-[ATOP - The one stop shop for all your tops](https://www.atoptool.nl/)
+For full information on the amazing performance monitoring software that creates these files, known as "Atop", refer to:  
+[Atop - The one stop shop for all your tops](https://www.atoptool.nl/)
 
 
 ## Table Of Contents
@@ -32,7 +33,9 @@ For full information on the amazing performance monitoring software that creates
 
 
 ## Compatibility
-- Supports ATOP 1.26 and 2.30, but may work with other versions.
+
+- Supports Python 3.10+
+- Supports Atop 1.26 and 2.3.0.
 
 
 ## Getting Started
@@ -60,7 +63,7 @@ pip install dist/pyatop*.tar.gz
 
 ## Examples
 
-Read an ATOP log with the example JSON command:
+Read an Atop log with the example JSON command:
 ```shell
 pyatop ~/atop.log -P CPU --pretty
 ```
