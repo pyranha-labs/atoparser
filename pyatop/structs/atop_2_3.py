@@ -9,8 +9,8 @@ to match python CamelCase standards. Each struct includes the following to help 
 Struct ordering matches the C source to help with comparisons.
 If structs match exactly from a previous version, they are reused via aliasing.
 
-See https://github.com/Atoptool/atop for more information and references to the C process source code.
-Using schemas and structs from Atop 2.3.
+See https://github.com/Atoptool/atop for more information and full details about each field.
+Using schemas and structs from Atop 2.3.0.
 """
 
 import ctypes
@@ -86,6 +86,7 @@ class Header(ctypes.Structure, HeaderMixin):
         ("ossub", ctypes.c_int),
         ("ifuture", ctypes.c_int * 6),
     ]
+    supported_version = "2.3"
 
     def check_compatibility(self) -> None:
         """Verify if the loaded values are compatible with this header version.
