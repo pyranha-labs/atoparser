@@ -24,7 +24,13 @@ off_t = ctypes.c_long
 
 
 class HeaderMixin:
-    """Shared logic for top level struct describing information contained in the log file."""
+    """Shared logic for top level struct describing information contained in the log file.
+
+    Attributes:
+        supported_version: The version of Atop that this header is compatible with as <major.<minor>.
+    """
+
+    supported_version = None
 
     @property
     def semantic_version(self) -> str:

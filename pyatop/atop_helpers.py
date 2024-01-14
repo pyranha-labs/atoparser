@@ -17,8 +17,6 @@ The basic layout of an ATOP log file can be described as the following:
     - Always found directly after a SStat.
     - Always found directly before the next Record if not the end of file.
     - Contains statistics about every task/process on the system.
-
-See https://github.com/Atoptool/atop for more information and references to the C process source code.
 """
 
 from __future__ import annotations
@@ -31,48 +29,23 @@ from typing import Union
 from pyatop.structs import atop_1_26
 from pyatop.structs import atop_2_3
 from pyatop.structs import atop_2_4
+from pyatop.structs import atop_2_5
 
-Header = Union[
-    atop_1_26.Header,
-    atop_2_3.Header,
-    atop_2_4.Header,
+_VERSIONS = [
+    atop_1_26,
+    atop_2_3,
+    atop_2_4,
+    atop_2_5,
 ]
-Record = Union[
-    atop_1_26.Record,
-    atop_2_3.Record,
-    atop_2_4.Record,
-]
-SStat = Union[
-    atop_1_26.SStat,
-    atop_2_3.SStat,
-    atop_2_4.SStat,
-]
-TStat = Union[  # pylint: disable=invalid-name
-    atop_1_26.TStat,
-    atop_2_3.TStat,
-    atop_2_4.TStat,
-]
+Header = Union[tuple(module.Header for module in _VERSIONS)]
+Record = Union[tuple(module.Record for module in _VERSIONS)]
+SStat = Union[tuple(module.SStat for module in _VERSIONS)]
+TStat = Union[tuple(module.TStat for module in _VERSIONS)]  # pylint: disable=invalid-name
+_HEADER_BY_VERSION: dict[str, type[Header]] = {module.Header.supported_version: module.Header for module in _VERSIONS}
+_RECORD_BY_VERSION: dict[str, type[Record]] = {module.Header.supported_version: module.Record for module in _VERSIONS}
+_SSTAT_BY_VERSION: dict[str, type[SStat]] = {module.Header.supported_version: module.SStat for module in _VERSIONS}
+_TSTAT_BY_VERSION: dict[str, type[TStat]] = {module.Header.supported_version: module.TStat for module in _VERSIONS}
 
-_HEADER_BY_VERSION: dict[str, type[Header]] = {
-    "1.26": atop_1_26.Header,
-    "2.3": atop_2_3.Header,
-    "2.4": atop_2_4.Header,
-}
-_RECORD_BY_VERSION: dict[str, type[Record]] = {
-    "1.26": atop_1_26.Record,
-    "2.3": atop_2_3.Record,
-    "2.4": atop_2_4.Record,
-}
-_SSTAT_BY_VERSION: dict[str, type[SStat]] = {
-    "1.26": atop_1_26.SStat,
-    "2.3": atop_2_3.SStat,
-    "2.4": atop_2_4.SStat,
-}
-_TSTAT_BY_VERSION: dict[str, type[TStat]] = {
-    "1.26": atop_1_26.TStat,
-    "2.3": atop_2_3.TStat,
-    "2.4": atop_2_4.TStat,
-}
 # Fallback to latest if there is no custom class provided to attempt backwards compatibility.
 _DEFAULT_VERSION = list(_HEADER_BY_VERSION.keys())[-1]
 
