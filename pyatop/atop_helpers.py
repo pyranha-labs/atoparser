@@ -30,39 +30,48 @@ from typing import Union
 
 from pyatop.structs import atop_1_26
 from pyatop.structs import atop_2_3
+from pyatop.structs import atop_2_4
 
 Header = Union[
     atop_1_26.Header,
     atop_2_3.Header,
+    atop_2_4.Header,
 ]
 Record = Union[
     atop_1_26.Record,
     atop_2_3.Record,
+    atop_2_4.Record,
 ]
 SStat = Union[
     atop_1_26.SStat,
     atop_2_3.SStat,
+    atop_2_4.SStat,
 ]
 TStat = Union[  # pylint: disable=invalid-name
     atop_1_26.TStat,
     atop_2_3.TStat,
+    atop_2_4.TStat,
 ]
 
 _HEADER_BY_VERSION: dict[str, type[Header]] = {
     "1.26": atop_1_26.Header,
     "2.3": atop_2_3.Header,
+    "2.4": atop_2_4.Header,
 }
 _RECORD_BY_VERSION: dict[str, type[Record]] = {
     "1.26": atop_1_26.Record,
     "2.3": atop_2_3.Record,
+    "2.4": atop_2_4.Record,
 }
 _SSTAT_BY_VERSION: dict[str, type[SStat]] = {
     "1.26": atop_1_26.SStat,
     "2.3": atop_2_3.SStat,
+    "2.4": atop_2_4.SStat,
 }
 _TSTAT_BY_VERSION: dict[str, type[TStat]] = {
     "1.26": atop_1_26.TStat,
     "2.3": atop_2_3.TStat,
+    "2.4": atop_2_4.TStat,
 }
 # Fallback to latest if there is no custom class provided to attempt backwards compatibility.
 _DEFAULT_VERSION = list(_HEADER_BY_VERSION.keys())[-1]
@@ -265,7 +274,7 @@ def struct_to_dict(struct: ctypes.Structure) -> dict:
                 for subdata in field_data[: getattr(struct, struct.fields_limiters.get(field_name))]:
                     struct_dict[field_name].append(struct_to_dict(subdata))
             elif isinstance(field_data, bytes):
-                struct_dict[field_name] = field_data.decode()
+                struct_dict[field_name] = field_data.decode(errors="ignore")
             else:
                 struct_dict[field_name] = field_data
     return struct_dict

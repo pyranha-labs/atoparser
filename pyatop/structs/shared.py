@@ -23,6 +23,27 @@ count_t = ctypes.c_longlong
 off_t = ctypes.c_long
 
 
+class HeaderMixin:
+    """Shared logic for top level struct describing information contained in the log file."""
+
+    @property
+    def semantic_version(self) -> str:
+        """Convert the raw version into a semantic version.
+
+        Returns:
+            The final major.minor version from the header aversion.
+                Atop releases have "maintenance" versions, but they do not impact the header or file structure.
+                i.e., 2.3.1 is the same as 2.3.
+        """
+        # Use a general getattr() call to ensure the instance can always set the attribute even on first call.
+        # C structs have various ways of creating instances, so __init__ is not always called to set up attributes.
+        if not getattr(self, "_version", None):
+            major = (self.aversion >> 8) & 0x7F
+            minor = self.aversion & 0xFF
+            self._version = f"{major}.{minor}"  # pylint: disable=attribute-defined-outside-init
+        return self._version
+
+
 class UTSName(ctypes.Structure):
     """Struct to describe basic system information.
 
