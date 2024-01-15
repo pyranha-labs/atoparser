@@ -43,19 +43,7 @@ MAXINTF = 32
 
 
 class Header(ctypes.Structure, HeaderMixin):
-    """Top level struct to describe information about the system running ATOP and the log file itself.
-
-    Field descriptions from atop:
-        aversion   Creator atop version with MSB.
-        future1    Can be reused.
-        future2    Can be reused.
-        rawheadlen Length of struct rawheader.
-        rawreclen  Length of struct rawrecord.
-        hertz      Clock interrupts per second.
-        sfuture[6] Future use.
-        sstatlen   Length of struct sstat.
-        pstatlen   Length of struct pstat.
-        utsname    Info about this system.
+    """Top level struct to describe information about the system running Atop and the log file itself.
 
     C Name: rawheader
     C Location: rawlog.c
@@ -101,22 +89,6 @@ class Header(ctypes.Structure, HeaderMixin):
 
 class Record(ctypes.Structure):
     """Top level struct to describe basic process information, and the following SStat and PStat structs.
-
-    Field descriptions from atop:
-        curtime    Current time (epoch).
-        flags      Various flags.
-        sfuture[3] Future use.
-        scomplen   Length of compressed sstat.
-        pcomplen   Length of compressed pstats.
-        interval   Interval (number of seconds).
-        nlist      Number of processes in list.
-        npresent   Total number of processes.
-        nexit      Number of exited processes.
-        ntrun      Number of running  threads.
-        ntslpi     Number of sleeping threads(S).
-        ntslpu     Number of sleeping threads(D).
-        nzombie    Number of zombie processes.
-        ifuture[6] Future use.
 
     C Name: rawrecord
     C Location: rawlog.c
@@ -578,7 +550,7 @@ class SStat(ctypes.Structure):
 
 
 class GEN(ctypes.Structure):
-    """Embedded struct to describe a single process' general information from the 'GEN' parseable.
+    """Embedded struct to describe a single process' general information.
 
     C Name: gen
     C Location: photoproc.h
@@ -611,7 +583,7 @@ class GEN(ctypes.Structure):
 
 
 class CPU(ctypes.Structure):
-    """Embedded struct to describe a single process' processor usage from the 'CPU' parseable.
+    """Embedded struct to describe a single process' processor usage.
 
     C Name: cpu
     C Location: photoproc.h
@@ -633,7 +605,7 @@ class CPU(ctypes.Structure):
 
 
 class DSK(ctypes.Structure):
-    """Embedded struct to describe a single process' disk usage from the 'DSK' parseable.
+    """Embedded struct to describe a single process' disk usage.
 
     C Name: dsk
     C Location: photoproc.h
@@ -651,7 +623,7 @@ class DSK(ctypes.Structure):
 
 
 class MEM(ctypes.Structure):
-    """Embedded struct to describe a single process' memory usage from the 'MEM' parseable.
+    """Embedded struct to describe a single process' memory usage.
 
     C Name: mem
     C Location: photoproc.h
@@ -671,7 +643,7 @@ class MEM(ctypes.Structure):
 
 
 class NET(ctypes.Structure):
-    """Embedded struct to describe a single process' network usage from the 'NET' parseable.
+    """Embedded struct to describe a single process' network usage.
 
     C Name: net
     C Location: photoproc.h

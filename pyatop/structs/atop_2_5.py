@@ -52,7 +52,7 @@ MAXIBNAME = 12
 
 
 class Header(atop_2_3.Header):
-    """Top level struct to describe information about the system running ATOP and the log file itself."""
+    """Top level struct to describe information about the system running Atop and the log file itself."""
 
     supported_version = "2.5"
 
