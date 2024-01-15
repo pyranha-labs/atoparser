@@ -1,4 +1,4 @@
-"""Set up configuration and dependencies for the pyatop library."""
+"""Set up configuration and dependencies for the atoparser library."""
 
 import os
 from pathlib import Path
@@ -31,16 +31,16 @@ def read_requirements_file(extra_type: str | None) -> list[str]:
 
 
 setup(
-    name="pyatop",
+    name="atoparser",
     description="Utilities for reading Atop files natively in Python",
     long_description=Path("README.md").read_text(encoding="utf-8"),
     long_description_content_type="text/markdown",
-    version=_find_version("pyatop"),
+    version=_find_version("atoparser"),
     author="David Fritz",
-    url="https://github.com/pyranha-labs/pyatop",
+    url="https://github.com/pyranha-labs/atoparser",
     project_urls={
-        "Issue Tracker": "https://github.com/pyranha-labs/pyatop/issues",
-        "Source Code": "https://github.com/pyranha-labs/pyatop",
+        "Issue Tracker": "https://github.com/pyranha-labs/atoparser/issues",
+        "Source Code": "https://github.com/pyranha-labs/atoparser",
     },
     license="MIT",
     classifiers=[
@@ -62,7 +62,7 @@ setup(
         "Linux",
     ],
     test_suite="pytest",
-    packages=find_packages(ROOT_DIR, include=["pyatop*"], exclude=["*test", "tests*"]),
+    packages=find_packages(ROOT_DIR, include=["atoparser*"], exclude=["*test", "tests*"]),
     include_package_data=True,
     python_requires=">=3.10",
     extras_require={
@@ -72,7 +72,7 @@ setup(
     },
     entry_points={
         "console_scripts": [
-            "pyatop = pyatop.atop_reader:main",
+            "atoparser = atoparser.atop_reader:main",
         ]
     },
 )

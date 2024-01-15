@@ -26,15 +26,15 @@ import io
 import zlib
 from typing import Union
 
-from pyatop.structs import atop_1_26
-from pyatop.structs import atop_2_3
-from pyatop.structs import atop_2_4
-from pyatop.structs import atop_2_5
-from pyatop.structs import atop_2_6
-from pyatop.structs import atop_2_7
-from pyatop.structs import atop_2_8
-from pyatop.structs import atop_2_9
-from pyatop.structs import atop_2_10
+from atoparser.structs import atop_1_26
+from atoparser.structs import atop_2_3
+from atoparser.structs import atop_2_4
+from atoparser.structs import atop_2_5
+from atoparser.structs import atop_2_6
+from atoparser.structs import atop_2_7
+from atoparser.structs import atop_2_8
+from atoparser.structs import atop_2_9
+from atoparser.structs import atop_2_10
 
 _VERSIONS = [
     atop_1_26,

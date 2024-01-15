@@ -10,14 +10,15 @@ Struct ordering matches the C source to help with comparisons.
 If structs match exactly from a previous version, they are reused via aliasing.
 
 See https://github.com/Atoptool/atop for more information and full details about each field.
-Using schemas and structs from Atop 2.4.0.
+Using schemas and structs from Atop 2.6.0.
 """
 
 import ctypes
 
-from pyatop.structs import atop_1_26
-from pyatop.structs import atop_2_3
-from pyatop.structs.shared import count_t
+from atoparser.structs import atop_1_26
+from atoparser.structs import atop_2_3
+from atoparser.structs import atop_2_4
+from atoparser.structs.shared import count_t
 
 # Disable the following pylint warnings to allow the variables and classes to match the style from the C.
 # This helps with maintainability and cross-referencing.
@@ -54,7 +55,7 @@ MAXIBNAME = 12
 class Header(atop_2_3.Header):
     """Top level struct to describe information about the system running Atop and the log file itself."""
 
-    supported_version = "2.4"
+    supported_version = "2.6"
 
     def check_compatibility(self) -> None:
         """Verify if the loaded values are compatible with this header version."""
@@ -71,7 +72,42 @@ class Header(atop_2_3.Header):
 Record = atop_2_3.Record
 
 
-MemStat = atop_2_3.MemStat
+class MemStat(ctypes.Structure):
+    """Embedded struct to describe basic memory information.
+
+    C Name: memstat
+    C Location: photosyst.h
+    C Parent: sstat
+    """
+
+    _fields_ = [
+        ("physmem", count_t),
+        ("freemem", count_t),
+        ("buffermem", count_t),
+        ("slabmem", count_t),
+        ("cachemem", count_t),
+        ("cachedrt", count_t),
+        ("totswap", count_t),
+        ("freeswap", count_t),
+        ("pgscans", count_t),
+        ("pgsteal", count_t),
+        ("allocstall", count_t),
+        ("swouts", count_t),
+        ("swins", count_t),
+        ("commitlim", count_t),
+        ("committed", count_t),
+        ("shmem", count_t),
+        ("shmrss", count_t),
+        ("shmswp", count_t),
+        ("slabreclaim", count_t),
+        ("tothugepage", count_t),
+        ("freehugepage", count_t),
+        ("hugepagesz", count_t),
+        ("vmwballoon", count_t),
+        ("zfsarcsize", count_t),
+        ("swapcached", count_t),
+        ("cfuture", count_t * 6),
+    ]
 
 
 FreqCnt = atop_1_26.FreqCnt
@@ -153,39 +189,10 @@ NFSMounts = atop_2_3.NFSMounts
 NFSStat = atop_2_3.NFSStat
 
 
-class PSI(ctypes.Structure):
-    """Embedded struct to describe average pressure.
-
-    C Name: psi
-    C Location: photosyst.h
-    C Parent: pressure
-    """
-
-    _fields_ = [
-        ("avg10", ctypes.c_float),
-        ("avg60", ctypes.c_float),
-        ("avg300", ctypes.c_float),
-        ("total", count_t),
-    ]
+PSI = atop_2_4.PSI
 
 
-class Pressure(ctypes.Structure):
-    """Embedded struct to describe pressure stats.
-
-    C Name: pressure
-    C Location: photosyst.h
-    C Parent: sstat
-    """
-
-    _fields_ = [
-        ("present", ctypes.c_char),
-        ("future", ctypes.c_char * 3),
-        ("cpusome", PSI),
-        ("memsome", PSI),
-        ("memfull", PSI),
-        ("iosome", PSI),
-        ("iofull", PSI),
-    ]
+Pressure = atop_2_4.Pressure
 
 
 PerContainer = atop_2_3.PerContainer
@@ -197,83 +204,16 @@ ContStat = atop_2_3.ContStat
 WWWStat = atop_1_26.WWWStat
 
 
-class PerGPU(ctypes.Structure):
-    """Embedded struct to describe per GPU statistics.
-
-    C Name: pergpu
-    C Location: photosyst.h
-    C Parent: gpustat
-    """
-
-    _fields_ = [
-        ("taskstats", ctypes.c_char),
-        ("nrprocs", ctypes.c_uint8),
-        ("type", ctypes.c_char * (MAXGPUTYPE + 1)),
-        ("busid", ctypes.c_char * (MAXGPUBUS + 1)),
-        ("gpunr", ctypes.c_int),
-        ("gpupercnow", ctypes.c_int),
-        ("mempercnow", ctypes.c_int),
-        ("memtotnow", count_t),
-        ("memusenow", count_t),
-        ("samples", count_t),
-        ("gpuperccum", count_t),
-        ("memperccum", count_t),
-        ("memusecum", count_t),
-    ]
+PerGPU = atop_2_4.PerGPU
 
 
-class GPUStat(ctypes.Structure):
-    """Embedded struct to describe overall GPU statistics.
-
-    C Name: gpustat
-    C Location: photosyst.h
-    C Parent: sstat
-    """
-
-    _fields_ = [
-        ("nrgpus", ctypes.c_int),
-        ("gpu", PerGPU * MAXGPU),
-    ]
-    fields_limiters = {
-        "gpu": "nrgpus",
-    }
+GPUStat = atop_2_4.GPUStat
 
 
-class PerIFB(ctypes.Structure):
-    """Embedded struct to describe per InfiniBand statistics.
-
-    C Name: perifb
-    C Location: photosyst.h
-    C Parent: ifbstat
-    """
-
-    _fields_ = [
-        ("ibname", ctypes.c_char * MAXIBNAME),
-        ("portnr", ctypes.c_short),
-        ("lanes", ctypes.c_short),
-        ("rate", count_t),
-        ("rcvb", count_t),
-        ("sndb", count_t),
-        ("rcvp", count_t),
-        ("sndp", count_t),
-    ]
+PerIFB = atop_2_4.PerIFB
 
 
-class IFBStat(ctypes.Structure):
-    """Embedded struct to describe overall InfiniBand statistics.
-
-    C Name: ifbstat
-    C Location: photosyst.h
-    C Parent: sstat
-    """
-
-    _fields_ = [
-        ("nrports", ctypes.c_int),
-        ("ifb", PerIFB * MAXIBPORT),
-    ]
-    fields_limiters = {
-        "ifb": "nrports",
-    }
+IFBStat = atop_2_4.IFBStat
 
 
 IPv4Stats = atop_1_26.IPv4Stats
@@ -325,38 +265,63 @@ class SStat(ctypes.Structure):
 GEN = atop_2_3.GEN
 
 
-CPU = atop_1_26.CPU
+class CPU(ctypes.Structure):
+    """Embedded struct to describe a single process' processor usage.
+
+    C Name: cpu
+    C Location: photoproc.h
+    C Parent: pstat
+    """
+
+    _fields_ = [
+        ("utime", count_t),
+        ("stime", count_t),
+        ("nice", ctypes.c_int),
+        ("prio", ctypes.c_int),
+        ("rtprio", ctypes.c_int),
+        ("policy", ctypes.c_int),
+        ("curcpu", ctypes.c_int),
+        ("sleepavg", ctypes.c_int),
+        ("ifuture", ctypes.c_int * 4),
+        ("wchan", ctypes.c_char * 16),
+        ("rundelay", count_t),
+        ("cfuture", count_t),
+    ]
 
 
 DSK = atop_1_26.DSK
 
 
-MEM = atop_2_3.MEM
+class MEM(ctypes.Structure):
+    """Embedded struct to describe a single process' memory usage.
+
+    C Name: mem
+    C Location: photoproc.h
+    C Parent: pstat
+    """
+
+    _fields_ = [
+        ("minflt", count_t),
+        ("majflt", count_t),
+        ("vexec", count_t),
+        ("vmem", count_t),
+        ("rmem", count_t),
+        ("pmem", count_t),
+        ("vgrow", count_t),
+        ("rgrow", count_t),
+        ("vdata", count_t),
+        ("vstack", count_t),
+        ("vlibs", count_t),
+        ("vswap", count_t),
+        ("vlock", count_t),
+        ("cfuture", count_t * 3),
+    ]
 
 
 NET = atop_2_3.NET
 
 
-class GPU(ctypes.Structure):
-    """Embedded struct to describe a single process' GPU usage.
-
-    C Name: gpu
-    C Location: photoproc.h
-    C Parent: tstat
-    """
-
-    _fields_ = [
-        ("state", ctypes.c_char),
-        ("cfuture", ctypes.c_char * 3),
-        ("nrgpus", ctypes.c_short),
-        ("gpulist", ctypes.c_int32),
-        ("gpubusy", ctypes.c_int),
-        ("membusy", ctypes.c_int),
-        ("timems", count_t),
-        ("memnow", count_t),
-        ("memcum", count_t),
-        ("sample", count_t),
-    ]
+GPU = atop_2_4.GPU
 
 
 class TStat(ctypes.Structure):

@@ -1,7 +1,7 @@
 """Parser function used to convert Atop structs in 1.26 into "parseable" output based on the signature name."""
 
-from pyatop import atop_helpers
-from pyatop.structs import atop_1_26
+from atoparser import atop_helpers
+from atoparser.structs import atop_1_26
 
 # Disable the following pylint warnings to allow functions to match a consistent type across all parseables.
 # This helps simplify calls allow dynamic function lookups to have consistent input arguments.

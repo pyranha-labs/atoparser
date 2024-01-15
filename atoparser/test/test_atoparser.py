@@ -10,10 +10,10 @@ from typing import Callable
 
 import pytest
 
-from pyatop import atop_helpers
-from pyatop import atop_reader
-from pyatop.parsers import atop_1_26 as atop_1_26_parsers
-from pyatop.structs import atop_1_26 as atop_1_26_structs
+from atoparser import atop_helpers
+from atoparser import atop_reader
+from atoparser.parsers import atop_1_26 as atop_1_26_parsers
+from atoparser.structs import atop_1_26 as atop_1_26_structs
 
 TEST_FILE_DIR = os.path.join(os.path.dirname(__file__), "files")
 
@@ -1518,7 +1518,7 @@ def test_parseable_map(parseable: str) -> None:
 
 
 @pytest.mark.parametrize_test_case("test_case", TEST_CASES["parseable"])
-def test_file_sstat(test_case: dict, function_tester: Callable) -> None:
+def test_parseable(test_case: dict, function_tester: Callable) -> None:
     """Read a file and ensure the values in the "parseable" output match expectations."""
 
     def _get_parseables(log: str, parseables: list[str], module: ModuleType) -> dict:

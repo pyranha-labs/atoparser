@@ -10,19 +10,18 @@ Struct ordering matches the C source to help with comparisons.
 If structs match exactly from a previous version, they are reused via aliasing.
 
 See https://github.com/Atoptool/atop for more information and full details about each field.
-Using schemas and structs from Atop 2.8.0.
+Using schemas and structs from Atop 2.10.0.
 """
 
 import ctypes
 
-from pyatop.structs import atop_1_26
-from pyatop.structs import atop_2_3
-from pyatop.structs import atop_2_4
-from pyatop.structs import atop_2_7
-from pyatop.structs.shared import HeaderMixin
-from pyatop.structs.shared import UTSName
-from pyatop.structs.shared import count_t
-from pyatop.structs.shared import time_t
+from atoparser.structs import atop_1_26
+from atoparser.structs import atop_2_3
+from atoparser.structs import atop_2_4
+from atoparser.structs import atop_2_7
+from atoparser.structs import atop_2_8
+from atoparser.structs.shared import count_t
+from atoparser.structs.shared import time_t
 
 # Disable the following pylint warnings to allow the variables and classes to match the style from the C.
 # This helps with maintainability and cross-referencing.
@@ -41,6 +40,7 @@ CGROUPV2 = 0x00000100
 PNAMLEN = 15
 CMDLEN = 255
 CGRLEN = 64
+UTSLEN = 15
 
 # Definitions from photosyst.h
 MAXCPU = 2048
@@ -60,35 +60,10 @@ MAXDKNAM = 32
 MAXIBNAME = 12
 
 
-class Header(ctypes.Structure, HeaderMixin):
-    """Top level struct to describe information about the system running Atop and the log file itself.
+class Header(atop_2_8.Header):
+    """Top level struct to describe information about the system running Atop and the log file itself."""
 
-    C Name: rawheader
-    C Location: rawlog.c
-    """
-
-    _fields_ = [
-        ("magic", ctypes.c_uint),
-        ("aversion", ctypes.c_ushort),
-        ("future1", ctypes.c_ushort),
-        ("future2", ctypes.c_ushort),
-        ("rawheadlen", ctypes.c_ushort),
-        ("rawreclen", ctypes.c_ushort),
-        ("hertz", ctypes.c_ushort),
-        ("pidwidth", ctypes.c_ushort),
-        ("sfuture", ctypes.c_ushort * 5),
-        ("sstatlen", ctypes.c_uint),
-        ("tstatlen", ctypes.c_uint),
-        ("utsname", UTSName),
-        ("cfuture", ctypes.c_char * 8),
-        ("pagesize", ctypes.c_uint),
-        ("supportflags", ctypes.c_int),
-        ("osrel", ctypes.c_int),
-        ("osvers", ctypes.c_int),
-        ("ossub", ctypes.c_int),
-        ("ifuture", ctypes.c_int * 6),
-    ]
-    supported_version = "2.8"
+    supported_version = "2.10"
 
     def check_compatibility(self) -> None:
         """Verify if the loaded values are compatible with this header version."""
@@ -135,16 +110,16 @@ class MemStat(ctypes.Structure):
         ("shmrss", count_t),
         ("shmswp", count_t),
         ("slabreclaim", count_t),
-        ("tothugepage", count_t),
-        ("freehugepage", count_t),
-        ("hugepagesz", count_t),
+        ("stothugepage", count_t),
+        ("sfreehugepage", count_t),
+        ("shugepagesz", count_t),
         ("vmwballoon", count_t),
         ("zfsarcsize", count_t),
         ("swapcached", count_t),
         ("ksmsharing", count_t),
         ("ksmshared", count_t),
-        ("zswstored", count_t),
-        ("zswtotpool", count_t),
+        ("zswapped", count_t),
+        ("zswap", count_t),
         ("oomkills", count_t),
         ("compactstall", count_t),
         ("pgmigrate", count_t),
@@ -152,6 +127,13 @@ class MemStat(ctypes.Structure):
         ("pgouts", count_t),
         ("pgins", count_t),
         ("pagetables", count_t),
+        ("zswouts", count_t),
+        ("zswins", count_t),
+        ("ltothugepage", count_t),
+        ("lfreehugepage", count_t),
+        ("lhugepagesz", count_t),
+        ("availablemem", count_t),
+        ("anonhugepage", count_t),
         ("cfuture", count_t * 4),
     ]
 
@@ -177,6 +159,7 @@ class MemPerNUMA(ctypes.Structure):
         ("inactive", count_t),
         ("shmem", count_t),
         ("tothp", count_t),
+        ("freehp", count_t),
     ]
 
 
@@ -195,42 +178,10 @@ class MemNUMA(ctypes.Structure):
     fields_limiters = {"numa": "nrnuma"}
 
 
-class CPUPerNUMA(ctypes.Structure):
-    """Embedded struct to describe basic CPU information per NUMA node.
-
-    C Name: cpupernuma
-    C Location: photosyst.h
-    C Parent: cpunuma
-    """
-
-    _fields_ = [
-        ("numanr", ctypes.c_int),
-        ("nrcpu", count_t),
-        ("stime", count_t),
-        ("utime", count_t),
-        ("ntime", count_t),
-        ("itime", count_t),
-        ("wtime", count_t),
-        ("Itime", count_t),
-        ("Stime", count_t),
-        ("steal", count_t),
-        ("guest", count_t),
-    ]
+CPUPerNUMA = atop_2_8.CPUPerNUMA
 
 
-class CPUNUMA(ctypes.Structure):
-    """Embedded struct to describe CPU usage across all NUMA nodes.
-
-    C Name: cpunuma
-    C Location: photosyst.h
-    C Parent: sstat
-    """
-
-    _fields_ = [
-        ("nrnuma", count_t),
-        ("numa", CPUPerNUMA * MAXNUMA),
-    ]
-    fields_limiters = {"numa": "nrnuma"}
+CPUNUMA = atop_2_8.CPUNUMA
 
 
 FreqCnt = atop_1_26.FreqCnt
@@ -242,50 +193,10 @@ PerCPU = atop_2_7.PerCPU
 CPUStat = atop_2_7.CPUStat
 
 
-class PerDSK(ctypes.Structure):
-    """Embedded struct to describe per disk information.
-
-    C Name: perdsk
-    C Location: photosyst.h
-    C Parent: dskstat
-    """
-
-    _fields_ = [
-        ("name", ctypes.c_char * MAXDKNAM),
-        ("nread", count_t),
-        ("nrsect", count_t),
-        ("nwrite", count_t),
-        ("nwsect", count_t),
-        ("io_ms", count_t),
-        ("avque", count_t),
-        ("ndisc", count_t),
-        ("ndsect", count_t),
-        ("inflight", count_t),
-        ("cfuture", count_t * 3),
-    ]
+PerDSK = atop_2_8.PerDSK
 
 
-class DSKStat(ctypes.Structure):
-    """Embedded struct to describe overall disk information.
-
-    C Name: dskstat
-    C Location: photosyst.h
-    C Parent: sstat
-    """
-
-    _fields_ = [
-        ("ndsk", ctypes.c_int),
-        ("nmdd", ctypes.c_int),
-        ("nlvm", ctypes.c_int),
-        ("dsk", PerDSK * MAXDSK),
-        ("mdd", PerDSK * MAXMDD),
-        ("lvm", PerDSK * MAXLVM),
-    ]
-    fields_limiters = {
-        "dsk": "ndsk",
-        "mdd": "nmdd",
-        "lvm": "nlvm",
-    }
+DSKStat = atop_2_8.DSKStat
 
 
 PerIntf = atop_2_3.PerIntf
@@ -336,83 +247,46 @@ PerIFB = atop_2_4.PerIFB
 IFBStat = atop_2_4.IFBStat
 
 
-class PerLLC(ctypes.Structure):
-    """Embedded struct to describe basic information per LLC (Last-Level Cache).
-
-    C Name: perllc
-    C Location: photosyst.h
-    C Parent: llcstat
-    """
-
-    _fields_ = [
-        ("id", ctypes.c_uint8),
-        ("occupancy", ctypes.c_float),
-        ("mbm_local", count_t),
-        ("mbm_total", count_t),
-    ]
+PerLLC = atop_2_8.PerLLC
 
 
-class LLCStat(ctypes.Structure):
-    """Embedded struct to describe all LLCs (Last-Level Cache).
-
-    C Name: llcstat
-    C Location: photosyst.h
-    C Parent: sstat
-    """
-
-    _fields_ = [
-        ("nrllcs", ctypes.c_int),
-        ("perllc", PerLLC * MAXLLC),
-    ]
-    fields_limiters = {"perllc": "nrllcs"}
+LLCStat = atop_2_8.LLCStat
 
 
 IPv4Stats = atop_1_26.IPv4Stats
 
 
-class ICMPv4Stats(ctypes.Structure):
-    """Embedded struct to describe overall ICMPv4 statistics.
-
-    C Name: icmpv4_stats
-    C Location: netstats.h
-    C Parent: netstat
-    """
-
-    _fields_ = [
-        ("InMsgs", count_t),
-        ("InErrors", count_t),
-        ("InCsumErrors", count_t),
-        ("InDestUnreachs", count_t),
-        ("InTimeExcds", count_t),
-        ("InParmProbs", count_t),
-        ("InSrcQuenchs", count_t),
-        ("InRedirects", count_t),
-        ("InEchos", count_t),
-        ("InEchoReps", count_t),
-        ("InTimestamps", count_t),
-        ("InTimestampReps", count_t),
-        ("InAddrMasks", count_t),
-        ("InAddrMaskReps", count_t),
-        ("OutMsgs", count_t),
-        ("OutErrors", count_t),
-        ("OutDestUnreachs", count_t),
-        ("OutTimeExcds", count_t),
-        ("OutParmProbs", count_t),
-        ("OutSrcQuenchs", count_t),
-        ("OutRedirects", count_t),
-        ("OutEchos", count_t),
-        ("OutEchoReps", count_t),
-        ("OutTimestamps", count_t),
-        ("OutTimestampReps", count_t),
-        ("OutAddrMasks", count_t),
-        ("OutAddrMaskReps", count_t),
-    ]
+ICMPv4Stats = atop_2_8.ICMPv4Stats
 
 
 UDPv4Stats = atop_1_26.UDPv4Stats
 
 
-TCPStats = atop_1_26.TCPStats
+class TCPStats(ctypes.Structure):
+    """Embedded struct to describe overall TCP statistics.
+
+    C Name: tcp_stats
+    C Location: netstats.h
+    C Parent: netstat
+    """
+
+    _fields_ = [
+        ("RtoAlgorithm", count_t),
+        ("RtoMin", count_t),
+        ("RtoMax", count_t),
+        ("MaxConn", count_t),
+        ("ActiveOpens", count_t),
+        ("PassiveOpens", count_t),
+        ("AttemptFails", count_t),
+        ("EstabResets", count_t),
+        ("CurrEstab", count_t),
+        ("InSegs", count_t),
+        ("OutSegs", count_t),
+        ("RetransSegs", count_t),
+        ("InErrs", count_t),
+        ("OutRsts", count_t),
+        ("InCsumErrors", count_t),
+    ]
 
 
 IPv6Stats = atop_1_26.IPv6Stats
@@ -499,10 +373,11 @@ class GEN(ctypes.Structure):
         ("nthrslpi", ctypes.c_int),
         ("nthrslpu", ctypes.c_int),
         ("nthrrun", ctypes.c_int),
+        ("nthridle", ctypes.c_int),
         ("ctid", ctypes.c_int),
         ("vpid", ctypes.c_int),
         ("wasinactive", ctypes.c_int),
-        ("container", ctypes.c_char * 16),
+        ("utsname", ctypes.c_char * (UTSLEN + 1)),
         ("cgpath", ctypes.c_char * CGRLEN),
     ]
 
@@ -531,6 +406,8 @@ class CPU(ctypes.Structure):
         ("wchan", ctypes.c_char * 16),
         ("rundelay", count_t),
         ("blkdelay", count_t),
+        ("nvcsw", count_t),
+        ("nivcsw", count_t),
         ("cfuture", count_t * 3),
     ]
 
@@ -538,34 +415,7 @@ class CPU(ctypes.Structure):
 DSK = atop_1_26.DSK
 
 
-class MEM(ctypes.Structure):
-    """Embedded struct to describe a single process' memory usage.
-
-    C Name: mem
-    C Location: photoproc.h
-    C Parent: pstat
-    """
-
-    _fields_ = [
-        ("minflt", count_t),
-        ("majflt", count_t),
-        ("vexec", count_t),
-        ("vmem", count_t),
-        ("rmem", count_t),
-        ("pmem", count_t),
-        ("vgrow", count_t),
-        ("rgrow", count_t),
-        ("vdata", count_t),
-        ("vstack", count_t),
-        ("vlibs", count_t),
-        ("vswap", count_t),
-        ("vlock", count_t),
-        ("cgmemmax", count_t),
-        ("cgmemmaxr", count_t),
-        ("cgswpmax", count_t),
-        ("cgswpmaxr", count_t),
-        ("cfuture", count_t * 3),
-    ]
+MEM = atop_2_8.MEM
 
 
 NET = atop_2_3.NET
