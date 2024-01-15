@@ -29,7 +29,11 @@ For full information on the amazing performance monitoring software that creates
   * [Compatibility](#compatibility)
   * [Getting Started](#getting-started)
     * [Installation](#installation)
-  * [Examples](#examples)
+  * [How Tos](#how-tos)
+    * [Read an Atop log with the example JSON command](#read-an-atop-log-with-the-example-json-command)
+    * [Iterate over the C structs as Python objects](#iterate-over-the-c-structs-as-python-objects)
+    * [Convert the C structs into JSON compatible objects](#convert-the-c-structs-into-json-compatible-objects)
+    * [Add a new version](#add-a-new-version)
 
 
 ## Compatibility
@@ -61,14 +65,14 @@ pip install dist/atoparser*.tar.gz
 ```
 
 
-## Examples
+## How Tos
 
-Read an Atop log with the example JSON command:
+### Read an Atop log with the example JSON command:
 ```shell
 atoparser ~/atop.log -P CPU --pretty
 ```
 
-Iterate over the C structs as Python objects:  
+### Iterate over the C structs as Python objects:  
 ```python
 from atoparser import atop_helpers
 
@@ -80,7 +84,7 @@ with open(file, 'rb') as raw_file:
         print(f'CPU usage was {usage:.02%}')
 ```
 
-Convert the C structs into JSON compatible objects:  
+### Convert the C structs into JSON compatible objects:  
 ```python
 import json
 from atoparser import atop_helpers
@@ -89,3 +93,20 @@ with open(file, 'rb') as raw_file:
     header = atop_helpers.get_header(raw_file)
     print(json.dumps(atop_helpers.struct_to_dict(header), indent=2))
 ```
+
+
+### Add a new version
+
+1. Copy the previous struct definition in `atoparser/atop_structs/` to a new file by the `<major>_<minor>` version.
+
+1. Update any individual struct definitions as needed. Additional guidelines for this process outlined in the files.
+
+1. Update the `atoparser/atop_helpers.py` file to include the new version in the imports and `_VERSIONS` list.
+
+1. Use the `utils/build_atop.sh` script to generate a new sample Atop log file, and place in `atoparser/test/files/`.
+
+1. Compress the new log with `gzip` to reduce storage overhead.
+
+1. Add new tests to `atoparser/test/test_atoparser.py` to ensure the new version is parsed correctly.
+
+1. Update the `README.md` file to include the new supported version.
