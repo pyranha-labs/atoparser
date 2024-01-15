@@ -61,7 +61,7 @@ MAXIBNAME = 12
 class Header(atop_2_8.Header):
     """Top level struct to describe information about the system running Atop and the log file itself."""
 
-    supported_version = "2.8"
+    supported_version = "2.9"
 
     def check_compatibility(self) -> None:
         """Verify if the loaded values are compatible with this header version."""
@@ -225,34 +225,7 @@ class CPU(ctypes.Structure):
 DSK = atop_1_26.DSK
 
 
-class MEM(ctypes.Structure):
-    """Embedded struct to describe a single process' memory usage.
-
-    C Name: mem
-    C Location: photoproc.h
-    C Parent: pstat
-    """
-
-    _fields_ = [
-        ("minflt", count_t),
-        ("majflt", count_t),
-        ("vexec", count_t),
-        ("vmem", count_t),
-        ("rmem", count_t),
-        ("pmem", count_t),
-        ("vgrow", count_t),
-        ("rgrow", count_t),
-        ("vdata", count_t),
-        ("vstack", count_t),
-        ("vlibs", count_t),
-        ("vswap", count_t),
-        ("vlock", count_t),
-        ("cgmemmax", count_t),
-        ("cgmemmaxr", count_t),
-        ("cgswpmax", count_t),
-        ("cgswpmaxr", count_t),
-        ("cfuture", count_t * 3),
-    ]
+MEM = atop_2_8.MEM
 
 
 NET = atop_2_3.NET
