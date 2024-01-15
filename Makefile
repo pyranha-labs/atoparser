@@ -1,7 +1,7 @@
 PROJECT_ROOT := $(dir $(realpath $(lastword $(MAKEFILE_LIST))))
 SETUP_CFG := $(PROJECT_ROOT)setup.cfg
 PYTHON_BIN := python3.10
-NAME := pyatop
+NAME := atoparser
 
 
 ##### Initial Development Setups and Configurations #####

@@ -15,12 +15,12 @@ Using schemas and structs from Atop 2.9.0.
 
 import ctypes
 
-from pyatop.structs import atop_1_26
-from pyatop.structs import atop_2_3
-from pyatop.structs import atop_2_4
-from pyatop.structs import atop_2_7
-from pyatop.structs import atop_2_8
-from pyatop.structs.shared import count_t
+from atoparser.structs import atop_1_26
+from atoparser.structs import atop_2_3
+from atoparser.structs import atop_2_4
+from atoparser.structs import atop_2_7
+from atoparser.structs import atop_2_8
+from atoparser.structs.shared import count_t
 
 # Disable the following pylint warnings to allow the variables and classes to match the style from the C.
 # This helps with maintainability and cross-referencing.

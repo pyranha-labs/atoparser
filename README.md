@@ -13,9 +13,9 @@
 [![license: MIT](https://img.shields.io/badge/license-MIT-lightgrey)](LICENSE)
 
 
-# PyAtop
+# Atoparser
 
-PyAtop is a zero dependency Atop log processing library written in Python. The library supports reading binary C data
+Atoparser is a zero dependency Atop log processing library written in Python. The library supports reading binary C data
 directly from compressed or uncompressed Atop log files, without the need to install Atop or call a subprocess.
 The converted data contains structured Python objects, that can then be used for JSON, CSV, or other types of output,
 storage, and analysis.
@@ -42,10 +42,10 @@ For full information on the amazing performance monitoring software that creates
 
 ### Installation
 
-Install PyAtop via git clone:
+Install Atoparser via git clone:
 ```shell
 git clone <path to fork>
-cd pyatop
+cd atoparser
 pip install .
 ```
 
@@ -53,11 +53,11 @@ Or build and install from wheel:
 ```shell
 # Build locally.
 git clone <path to fork>
-cd pyatop
+cd atoparser
 make wheel
 
-# Push dist/pyatop*.tar.gz to environment where it will be installed.
-pip install dist/pyatop*.tar.gz
+# Push dist/atoparser*.tar.gz to environment where it will be installed.
+pip install dist/atoparser*.tar.gz
 ```
 
 
@@ -65,12 +65,12 @@ pip install dist/pyatop*.tar.gz
 
 Read an Atop log with the example JSON command:
 ```shell
-pyatop ~/atop.log -P CPU --pretty
+atoparser ~/atop.log -P CPU --pretty
 ```
 
 Iterate over the C structs as Python objects:  
 ```python
-from pyatop import atop_helpers
+from atoparser import atop_helpers
 
 with open(file, 'rb') as raw_file:
     header = atop_helpers.get_header(raw_file)
@@ -83,7 +83,7 @@ with open(file, 'rb') as raw_file:
 Convert the C structs into JSON compatible objects:  
 ```python
 import json
-from pyatop import atop_helpers
+from atoparser import atop_helpers
 
 with open(file, 'rb') as raw_file:
     header = atop_helpers.get_header(raw_file)

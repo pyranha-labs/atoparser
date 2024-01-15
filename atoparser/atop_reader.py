@@ -6,8 +6,8 @@ import argparse
 import gzip
 import json
 
-from pyatop import atop_helpers
-from pyatop.parsers import atop_1_26
+from atoparser import atop_helpers
+from atoparser.parsers import atop_1_26
 
 PARSEABLES = ["cpu", "CPL", "CPU", "DSK", "LVM", "MDD", "MEM", "NETL", "NETU", "PAG", "PRC", "PRG", "PRM", "PRN", "SWP"]
 PARSEABLE_MAP = {
