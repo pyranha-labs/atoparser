@@ -46,7 +46,12 @@ For full information on the amazing performance monitoring software that creates
 
 ### Installation
 
-Install Atoparser via git clone:
+Install Atoparser via pip:
+```shell
+pip install atoparser
+```
+
+Or via git clone:
 ```shell
 git clone <path to fork>
 cd atoparser
