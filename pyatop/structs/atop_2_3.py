@@ -48,19 +48,7 @@ MAXDKNAM = 32
 
 
 class Header(ctypes.Structure, HeaderMixin):
-    """Top level struct to describe information about the system running ATOP and the log file itself.
-
-    Field descriptions from atop:
-        aversion   Creator atop version with MSB.
-        future1    Can be reused.
-        future2    Can be reused.
-        rawheadlen Length of struct rawheader.
-        rawreclen  Length of struct rawrecord.
-        hertz      Clock interrupts per second.
-        sfuture[6] Future use.
-        sstatlen   Length of struct sstat.
-        tstatlen   Length of struct tstat.
-        utsname    Info about this system.
+    """Top level struct to describe information about the system running Atop and the log file itself.
 
     C Name: rawheader
     C Location: rawlog.c
@@ -106,25 +94,6 @@ class Header(ctypes.Structure, HeaderMixin):
 
 class Record(ctypes.Structure):
     """Top level struct to describe basic process information, and the following SStat and TStat structs.
-
-    Field descriptions from atop:
-        curtime    Current time (epoch).
-        flags      Various flags.
-        sfuture[3] Future use.
-        scomplen   Length of compressed sstat.
-        pcomplen   Length of compressed tstats.
-        interval   Interval (number of seconds).
-        ndeviat    Number of tasks in list.
-        nactproc   Number of processes in list.
-        ntask      Total number of tasks.
-        totproc    Total number of processes.
-        totrun     Number of running  threads.
-        totslpi    Number of sleeping threads(S).
-        totslpu    Number of sleeping threads(D).
-        totzomb    Number of zombie processes.
-        nexit      Number of exited processes.
-        noverflow  Number of overflow processes.
-        ifuture[6] Future use.
 
     C Name: rawrecord
     C Location: rawlog.c
@@ -357,7 +326,7 @@ class PerNFSMount(ctypes.Structure):
 
 
 class Server(ctypes.Structure):
-    """Embedded struct to describe NFS server information from the 'NFS' parseable.
+    """Embedded struct to describe NFS server information.
 
     C Name: server
     C Location: photoproc.h
@@ -385,7 +354,7 @@ class Server(ctypes.Structure):
 
 
 class Client(ctypes.Structure):
-    """Embedded struct to describe NFS client information from the 'NFC' parseable.
+    """Embedded struct to describe NFS client information.
 
     C Name: client
     C Location: photoproc.h
@@ -403,7 +372,7 @@ class Client(ctypes.Structure):
 
 
 class NFSMounts(ctypes.Structure):
-    """Embedded struct to describe NFS mount information from the 'NFM' parseable.
+    """Embedded struct to describe NFS mount information.
 
     C Name: mfsmounts
     C Location: photoproc.h
@@ -517,7 +486,7 @@ class SStat(ctypes.Structure):
 
 
 class GEN(ctypes.Structure):
-    """Embedded struct to describe a single process' general information from the 'GEN' parseable.
+    """Embedded struct to describe a single process' general information.
 
     C Name: gen
     C Location: photoproc.h
@@ -561,7 +530,7 @@ DSK = atop_1_26.DSK
 
 
 class MEM(ctypes.Structure):
-    """Embedded struct to describe a single process' memory usage from the 'MEM' parseable.
+    """Embedded struct to describe a single process' memory usage.
 
     C Name: mem
     C Location: photoproc.h
@@ -586,7 +555,7 @@ class MEM(ctypes.Structure):
 
 
 class NET(ctypes.Structure):
-    """Embedded struct to describe a single process' network usage from the 'NET' parseable.
+    """Embedded struct to describe a single process' network usage.
 
     C Name: net
     C Location: photoproc.h
