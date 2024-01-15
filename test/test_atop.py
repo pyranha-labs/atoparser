@@ -220,6 +220,64 @@ TEST_CASES = {
                 },
             },
         },
+        "2.8": {
+            "args": [
+                os.path.join(TEST_FILE_DIR, "atop_2_8.log.gz"),
+            ],
+            "returns": {
+                "aversion": 33288,
+                "hertz": 100,
+                "magic": 4276993775,
+                "osrel": 5,
+                "ossub": 104,
+                "osvers": 10,
+                "pagesize": 4096,
+                "pidwidth": 5,
+                "rawheadlen": 480,
+                "rawreclen": 96,
+                "semantic_version": "2.8",
+                "sstatlen": 1021960,
+                "supportflags": 309,
+                "tstatlen": 968,
+                "utsname": {
+                    "domain": "(none)",
+                    "machine": "x86_64",
+                    "nodename": "fires-of-mount-doom1",
+                    "release": "5.10.104-linuxkit",
+                    "sysname": "Linux",
+                    "version": "#1 SMP Thu Mar 17 17:08:06 UTC 2022",
+                },
+            },
+        },
+        "2.8.1": {
+            "args": [
+                os.path.join(TEST_FILE_DIR, "atop_2_8_1.log.gz"),
+            ],
+            "returns": {
+                "aversion": 33288,
+                "hertz": 100,
+                "magic": 4276993775,
+                "osrel": 5,
+                "ossub": 104,
+                "osvers": 10,
+                "pagesize": 4096,
+                "pidwidth": 5,
+                "rawheadlen": 480,
+                "rawreclen": 96,
+                "semantic_version": "2.8",
+                "sstatlen": 1021960,
+                "supportflags": 309,
+                "tstatlen": 968,
+                "utsname": {
+                    "domain": "(none)",
+                    "machine": "x86_64",
+                    "nodename": "fires-of-mount-doom1",
+                    "release": "5.10.104-linuxkit",
+                    "sysname": "Linux",
+                    "version": "#1 SMP Thu Mar 17 17:08:06 UTC 2022",
+                },
+            },
+        },
     },
     "file_record": {
         "1.26": {
@@ -373,6 +431,52 @@ TEST_CASES = {
                 "pcomplen": 248,
                 "record_index": 4,
                 "scomplen": 1203,
+                "totproc": 3,
+                "totrun": 1,
+                "totslpi": 2,
+                "totslpu": 0,
+                "totzomb": 0,
+            },
+        },
+        "2.8": {
+            "args": [
+                os.path.join(TEST_FILE_DIR, "atop_2_8.log.gz"),
+            ],
+            "returns": {
+                "curtime": 1705252932,
+                "flags": 288,
+                "interval": 1,
+                "nactproc": 1,
+                "ndeviat": 3,
+                "nexit": 0,
+                "noverflow": 0,
+                "ntask": 3,
+                "pcomplen": 270,
+                "record_index": 4,
+                "scomplen": 1289,
+                "totproc": 3,
+                "totrun": 1,
+                "totslpi": 2,
+                "totslpu": 0,
+                "totzomb": 0,
+            },
+        },
+        "2.8.1": {
+            "args": [
+                os.path.join(TEST_FILE_DIR, "atop_2_8_1.log.gz"),
+            ],
+            "returns": {
+                "curtime": 1705252967,
+                "flags": 288,
+                "interval": 1,
+                "nactproc": 1,
+                "ndeviat": 3,
+                "nexit": 0,
+                "noverflow": 0,
+                "ntask": 3,
+                "pcomplen": 272,
+                "record_index": 4,
+                "scomplen": 1272,
                 "totproc": 3,
                 "totrun": 1,
                 "totslpi": 2,
@@ -550,6 +654,54 @@ TEST_CASES = {
                 "sample_index": 4,
             },
         },
+        "2.8": {
+            "args": [
+                os.path.join(TEST_FILE_DIR, "atop_2_8.log.gz"),
+            ],
+            "returns": {
+                "cpu": {
+                    "nrcpu": 6,
+                    "lavg1": 0.4000000059604645,
+                },
+                "mem": {
+                    "physmem": 2037722,
+                    "freemem": 1524637,
+                },
+                "intf": {
+                    "nrintf": 4,
+                    "intf": [{"name": "lo"}],
+                },
+                "dsk": {
+                    "ndsk": 1,
+                    "dsk": [{"name": "vda"}],
+                },
+                "sample_index": 4,
+            },
+        },
+        "2.8.1": {
+            "args": [
+                os.path.join(TEST_FILE_DIR, "atop_2_8_1.log.gz"),
+            ],
+            "returns": {
+                "cpu": {
+                    "nrcpu": 6,
+                    "lavg1": 0.46000000834465027,
+                },
+                "mem": {
+                    "physmem": 2037722,
+                    "freemem": 1524411,
+                },
+                "intf": {
+                    "nrintf": 4,
+                    "intf": [{"name": "lo"}],
+                },
+                "dsk": {
+                    "ndsk": 1,
+                    "dsk": [{"name": "vda"}],
+                },
+                "sample_index": 4,
+            },
+        },
     },
     "file_tstat": {
         "1.26": {
@@ -637,6 +789,32 @@ TEST_CASES = {
             "returns": {
                 "gen": {
                     "cmdline": "/mnt/pyatop/atop 1 5 -w /mnt/pyatop/atop_v2.7.1.log",
+                    "name": "atop",
+                },
+                "sample_index": 4,
+                "tstat_index": 2,
+            },
+        },
+        "2.8": {
+            "args": [
+                os.path.join(TEST_FILE_DIR, "atop_2_8.log.gz"),
+            ],
+            "returns": {
+                "gen": {
+                    "cmdline": "/mnt/pyatop/atop 1 5 -w /mnt/pyatop/atop_v2.8.0.log",
+                    "name": "atop",
+                },
+                "sample_index": 4,
+                "tstat_index": 2,
+            },
+        },
+        "2.8.1": {
+            "args": [
+                os.path.join(TEST_FILE_DIR, "atop_2_8_1.log.gz"),
+            ],
+            "returns": {
+                "gen": {
+                    "cmdline": "/mnt/pyatop/atop 1 5 -w /mnt/pyatop/atop_v2.8.1.log",
                     "name": "atop",
                 },
                 "sample_index": 4,
