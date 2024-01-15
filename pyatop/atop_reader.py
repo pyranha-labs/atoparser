@@ -1,6 +1,6 @@
 #! /usr/bin/env python3
 
-"""Simple ATOP log processor."""
+"""Simple Atop log processor."""
 
 import argparse
 import gzip
@@ -53,7 +53,7 @@ def parse_args() -> argparse.Namespace:
 
 
 def main() -> None:
-    """Primary function to load ATOP data."""
+    """Primary function to load Atop data."""
     args = parse_args()
 
     for file in args.files:

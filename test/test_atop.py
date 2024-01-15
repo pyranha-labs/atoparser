@@ -5,6 +5,7 @@ import io
 import json
 import os
 import zlib
+from types import ModuleType
 from typing import Callable
 
 import pytest
@@ -1117,6 +1118,211 @@ TEST_CASES = {
             "raises": zlib.error,
         },
     },
+    "parseable": {
+        "1.26": {
+            "args": [
+                os.path.join(TEST_FILE_DIR, "atop_1_26.log.gz"),
+                [
+                    "cpu",
+                    "CPL",
+                    "CPU",
+                    "DSK",
+                    "LVM",
+                    "MDD",
+                    "MEM",
+                    "NETL",
+                    "NETU",
+                    "PAG",
+                    "PRC",
+                    "PRG",
+                    "PRM",
+                    "PRN",
+                    "SWP",
+                ],
+                atop_1_26_parsers,
+            ],
+            "returns": {
+                "sample_index": 4,
+                "CPL": {
+                    "context_switches": 375,
+                    "interrupts": 231,
+                    "interval": 1,
+                    "load_1": 0.0,
+                    "load_15": 0.0,
+                    "load_5": 0.0,
+                    "procs": 6,
+                    "timestamp": 1705174821,
+                },
+                "CPU": {
+                    "guest": 0,
+                    "idle": 600,
+                    "interval": 1,
+                    "irq": 0,
+                    "niced": 0,
+                    "procs": 6,
+                    "softirq": 0,
+                    "steal": 0,
+                    "system": 1,
+                    "ticks": 100,
+                    "timestamp": 1705174821,
+                    "user": 0,
+                    "wait": 0,
+                },
+                "DSK": {
+                    "interval": 1,
+                    "io_ms": 0,
+                    "name": "vda",
+                    "read_sectors": 0,
+                    "reads": 0,
+                    "timestamp": 1705174821,
+                    "write_sectors": 0,
+                    "writes": 0,
+                },
+                "MEM": {
+                    "buffer_cache": 73771,
+                    "dirty_pages": 13,
+                    "free_mem": 1664263,
+                    "interval": 1,
+                    "page_cache": 178807,
+                    "page_size": 4096,
+                    "phys_mem": 2037722,
+                    "slab": 60201,
+                    "timestamp": 1705174821,
+                },
+                "NETL": {
+                    "byte_received": 0,
+                    "bytes_transmitted": 0,
+                    "duplex": 1,
+                    "interval": 1,
+                    "name": "eth0",
+                    "pkt_received": 0,
+                    "pkt_transmitted": 0,
+                    "speed": 0,
+                    "timestamp": 1705174821,
+                },
+                "NETU": {
+                    "interval": 1,
+                    "ip_pkt_delivered": 0,
+                    "ip_pkt_forwarded": 0,
+                    "ip_pkt_received": 0,
+                    "ip_pkt_transmitted": 0,
+                    "name": "upper",
+                    "tcp_pkt_received": 0,
+                    "tcp_pkt_transmitted": 0,
+                    "timestamp": 1705174821,
+                    "udp_pkt_received": 0,
+                    "udp_pkt_transmitted": 0,
+                },
+                "PAG": {
+                    "alloc_stalls": 0,
+                    "interval": 1,
+                    "page_scans": 0,
+                    "page_size": 4096,
+                    "swapins": 0,
+                    "swapouts": 0,
+                    "timestamp": 1705174821,
+                },
+                "PRC": {
+                    "cpu": 3,
+                    "interval": 1,
+                    "name": "atop",
+                    "nice": 0,
+                    "pid": 294,
+                    "policy": 0,
+                    "priority": 120,
+                    "priority_realtime": 0,
+                    "sleep": 0,
+                    "state": "R",
+                    "system_consumption": 0,
+                    "ticks": 100,
+                    "timestamp": 1705174821,
+                    "user_consumption": 0,
+                },
+                "PRG": {
+                    "cmd": "atop 1 5 -w /mnt/pyatop/atop_1_26.log",
+                    "dead_threads": 0,
+                    "effective_gid": 0,
+                    "effective_uid": 0,
+                    "elapsed_time": 0,
+                    "exit_code": 0,
+                    "filesystem_gid": 0,
+                    "filesystem_uid": 0,
+                    "interval": 1,
+                    "name": "atop",
+                    "pid": 294,
+                    "ppid": 1,
+                    "real_gid": 0,
+                    "real_uid": 0,
+                    "running_threads": 1,
+                    "saved_gid": 0,
+                    "saved_uid": 0,
+                    "sleeping_threads": 0,
+                    "start_time": 1705174814,
+                    "state": "R",
+                    "tgid": 294,
+                    "threads": 1,
+                    "timestamp": 1705174821,
+                },
+                "PRM": {
+                    "interval": 1,
+                    "major_faults": 0,
+                    "minor_faults": 40,
+                    "name": "atop",
+                    "page": 4096,
+                    "pid": 294,
+                    "rgrowth": 0,
+                    "rsize": 2924544,
+                    "ssize": 151552,
+                    "state": "R",
+                    "timestamp": 1705174821,
+                    "vgrowth": 0,
+                    "vsize": 17149952,
+                },
+                "PRN": {
+                    "interval": 1,
+                    "kernel_patch": "n",
+                    "name": "atop",
+                    "pid": 294,
+                    "raw_received": 0,
+                    "raw_transmitted": 0,
+                    "state": "R",
+                    "tcp_received": 0,
+                    "tcp_received_size": 0,
+                    "tcp_transmitted": 0,
+                    "tcp_transmitted_size": 0,
+                    "timestamp": 1705174821,
+                    "udp_received": 0,
+                    "udp_received_size": 0,
+                    "udp_transmitted": 0,
+                    "udp_transmitted_size": 0,
+                },
+                "SWP": {
+                    "committed_limit": 1281004,
+                    "committed_space": 756909,
+                    "free_swap": 262143,
+                    "interval": 1,
+                    "page_size": 4096,
+                    "swap": 262143,
+                    "timestamp": 1705174821,
+                },
+                "cpu": {
+                    "guest": 0,
+                    "idle": 99,
+                    "interval": 1,
+                    "irq": 0,
+                    "niced": 0,
+                    "proc": 5,
+                    "softirq": 0,
+                    "steal": 0,
+                    "system": 0,
+                    "ticks": 100,
+                    "timestamp": 1705174821,
+                    "user": 0,
+                    "wait": 0,
+                },
+            },
+        }
+    },
 }
 
 
@@ -1136,6 +1342,22 @@ def _read_log(log: str) -> list[dict]:
             converted["header"]["semantic_version"] = header.semantic_version
             converted["record"]["record_index"] = index
             samples.append(json.loads(json.dumps(converted, sort_keys=True)))
+    return samples
+
+
+def _read_parseables(log: str, parseables: list[str], module: ModuleType) -> list[dict]:
+    """Convert an Atop log's "parseables" into an easily testable structured result."""
+    samples = []
+    opener = open if not log.endswith(".gz") else gzip.open
+    with opener(log, "rb") as raw_file:
+        header = atop_helpers.get_header(raw_file)
+        parsers = {parseable: getattr(module, f"parse_{parseable}") for parseable in parseables}
+        for record, sstat, tstat in atop_helpers.generate_statistics(raw_file, header, raise_on_truncation=False):
+            sample = {}
+            for parseable in parseables:
+                for result in parsers[parseable](header, record, sstat, tstat):
+                    sample.setdefault(parseable, []).append(result)
+            samples.append(sample)
     return samples
 
 
@@ -1293,3 +1515,18 @@ def test_parseable_map(parseable: str) -> None:
     assert (
         getattr(atop_1_26_parsers, f"parse_{parseable}") is not None
     ), f"Failed to find parse function for {parseable}"
+
+
+@pytest.mark.parametrize_test_case("test_case", TEST_CASES["parseable"])
+def test_file_sstat(test_case: dict, function_tester: Callable) -> None:
+    """Read a file and ensure the values in the "parseable" output match expectations."""
+
+    def _get_parseables(log: str, parseables: list[str], module: ModuleType) -> dict:
+        """Read a log and return the "parseable" set from the last sample to ensure the file processed correctly."""
+        results = _read_parseables(log, parseables, module)
+        final_result = results[-1]
+        last_values = {parseable: values[-1] for parseable, values in final_result.items()}
+        last_values["sample_index"] = len(results) - 1
+        return json.loads(json.dumps(last_values, sort_keys=True))
+
+    function_tester(test_case, _get_parseables)

@@ -59,7 +59,7 @@ qa: style lint typing security format
 # Run basic unit tests.
 .PHONY: test
 test:
-	pytest -n auto $(PROJECT_ROOT)
+	pytest -n auto $(PROJECT_ROOT) --cov
 
 
 ##### Builds #####
