@@ -1,6 +1,6 @@
-"""Helpers used to serialize/deserialize ATOP statistics directly from log files.
+"""Helpers used to serialize/deserialize Atop statistics directly from log files.
 
-The basic layout of an ATOP log file can be described as the following:
+The basic layout of an Atop log file can be described as the following:
 1. Raw Header:
     - Single instance at the beginning of the file.
     - Contains information about all the following raw records.
@@ -59,7 +59,7 @@ _TSTAT_BY_VERSION: dict[str, type[TStat]] = {module.Header.supported_version: mo
 # Fallback to latest if there is no custom class provided to attempt backwards compatibility.
 _DEFAULT_VERSION = list(_HEADER_BY_VERSION.keys())[-1]
 
-# Default ATOP sample is once per minute, but it can be manually increased/decreased.
+# Default Atop sample is once per minute, but it can be manually increased/decreased.
 # Additionally, logs may not rollover as expected, combining multiple hours into 1 log.
 # Limit the amount of read attempts to 1 per second for 1 day to ensure we do not get stuck in an infinite loop.
 MAX_SAMPLES_PER_FILE = 86400
@@ -74,10 +74,10 @@ def generate_statistics(
     raise_on_truncation: bool = True,
     max_samples: int = MAX_SAMPLES_PER_FILE,
 ) -> tuple[Record, SStat, list[TStat]]:
-    """Read statistics groups from an open ATOP log file.
+    """Read statistics groups from an open Atop log file.
 
     Args:
-        raw_file: An open ATOP file capable of reading as bytes.
+        raw_file: An open Atop file capable of reading as bytes.
         header: The header from the file containing metadata about records to read. If not provided, one will be read.
         raise_on_truncation: Raise compression exceptions after header is read. e.g. Software restarts
         max_samples: Maximum number of samples read from a file.
@@ -96,7 +96,7 @@ def generate_statistics(
         tstat_cls = _TSTAT_BY_VERSION.get(header_version, _TSTAT_BY_VERSION[_DEFAULT_VERSION])
         for _ in range(max_samples):
             # Read the repeating structured information until the end of the file.
-            # ATOP log files consist of the following after the header, repeated until the end:
+            # Atop log files consist of the following after the header, repeated until the end:
             # 1. Record: Metadata about statistics.
             # 2. SStats: System statistics.
             # 3. TStats: Task/process statistics.
@@ -115,14 +115,14 @@ def generate_statistics(
 
 
 def get_header(raw_file: io.BytesIO, check_compatibility: bool = True) -> Header:
-    """Get the raw file header from an open ATOP file.
+    """Get the raw file header from an open Atop file.
 
     Args:
-        raw_file: An open ATOP file capable of reading as bytes.
+        raw_file: An open Atop file capable of reading as bytes.
         check_compatibility: Whether to enforce compatibility check against supported versions on header creation.
 
     Returns:
-        The header at the beginning of an ATOP file.
+        The header at the beginning of an Atop file.
 
     Raises:
         ValueError if there are not enough bytes to read the header, or the bytes were invalid.
@@ -149,10 +149,10 @@ def get_header(raw_file: io.BytesIO, check_compatibility: bool = True) -> Header
 
 
 def get_record(raw_file: io.BytesIO, record_cls: type[Record]) -> Record:
-    """Get the next raw record from an open ATOP file.
+    """Get the next raw record from an open Atop file.
 
     Args:
-        raw_file: An open ATOP file capable of reading as bytes.
+        raw_file: An open Atop file capable of reading as bytes.
         record_cls: Record struct class to read the raw bytes into.
 
     Returns:
@@ -171,10 +171,10 @@ def get_sstat(
     raw_record: Record,
     sstat_cls: type[SStat],
 ) -> SStat:
-    """Get the next raw sstat from an open ATOP file.
+    """Get the next raw sstat from an open Atop file.
 
     Args:
-        raw_file: An open ATOP file capable of reading as bytes.
+        raw_file: An open Atop file capable of reading as bytes.
         raw_record: The preceding record containing metadata about the SStat to read.
         sstat_cls: SStat struct class to read the raw bytes into.
 
@@ -197,10 +197,10 @@ def get_tstat(
     record: Record,
     tstat_cls: type[TStat],
 ) -> list[TStat]:
-    """Get the next raw tstat array from an open ATOP file.
+    """Get the next raw tstat array from an open Atop file.
 
     Args:
-        raw_file: An open ATOP file capable of reading as bytes.
+        raw_file: An open Atop file capable of reading as bytes.
         record: The preceding record containing metadata about the TStats to read.
         tstat_cls: TStat struct class to read the raw bytes into.
 
@@ -236,7 +236,7 @@ def struct_to_dict(struct: ctypes.Structure) -> dict:
     Skips any "future" named fields since they are empty placeholders for potential future versions.
 
     Args:
-        struct: C struct loaded from raw ATOP file.
+        struct: C struct loaded from raw Atop file.
 
     Returns:
         C struct converted into a dictionary using the names of the struct's fields as keys.

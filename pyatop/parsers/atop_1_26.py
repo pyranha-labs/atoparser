@@ -1,4 +1,4 @@
-"""Parser function used to convert ATOP structs in 1.26 into "parseable" output based on the signature name."""
+"""Parser function used to convert Atop structs in 1.26 into "parseable" output based on the signature name."""
 
 from pyatop import atop_helpers
 from pyatop.structs import atop_1_26
