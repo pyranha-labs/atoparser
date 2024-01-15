@@ -148,44 +148,6 @@ def get_header(raw_file: io.BytesIO, check_compatibility: bool = True) -> Header
     return header
 
 
-def get_tstat(
-    raw_file: io.BytesIO,
-    record: Record,
-    tstat_cls: type[TStat],
-) -> list[TStat]:
-    """Get the next raw tstat array from an open ATOP file.
-
-    Args:
-        raw_file: An open ATOP file capable of reading as bytes.
-        record: The preceding record containing metadata about the TStats to read.
-        tstat_cls: TStat struct class to read the raw bytes into.
-
-    Returns:
-        All TStat structs after a raw SStat, but before the next raw record.
-
-    Raises:
-        ValueError if there are not enough bytes to read a stat array.
-    """
-    # Read the requested length instead of the length of the struct.
-    # The data is compressed and must be decompressed before it will fill the final list of structs.
-    buffer = raw_file.read(record.pcomplen)
-    decompressed = zlib.decompress(buffer)
-
-    # The final decompressed data is an array of structs, with the length determined by the raw record.
-    uncompressed_len = ctypes.sizeof(tstat_cls)
-    record_count = record.nlist if isinstance(record, atop_1_26.Record) else record.ndeviat
-    tstats = []
-    for index in range(record_count):
-        # Reconstruct one TStat struct for every possible byte chunk, incrementing the offset each pass. For example:
-        # First pass: 0 - 21650
-        # Second pass: 21651 - 43300
-        start = index * uncompressed_len
-        end = uncompressed_len * (index + 1)
-        tstat = tstat_cls.from_buffer_copy(decompressed[start:end])
-        tstats.append(tstat)
-    return tstats
-
-
 def get_record(raw_file: io.BytesIO, record_cls: type[Record]) -> Record:
     """Get the next raw record from an open ATOP file.
 
@@ -228,6 +190,44 @@ def get_sstat(
     decompressed = zlib.decompress(buffer)
     sstat = sstat_cls.from_buffer_copy(decompressed)
     return sstat
+
+
+def get_tstat(
+    raw_file: io.BytesIO,
+    record: Record,
+    tstat_cls: type[TStat],
+) -> list[TStat]:
+    """Get the next raw tstat array from an open ATOP file.
+
+    Args:
+        raw_file: An open ATOP file capable of reading as bytes.
+        record: The preceding record containing metadata about the TStats to read.
+        tstat_cls: TStat struct class to read the raw bytes into.
+
+    Returns:
+        All TStat structs after a raw SStat, but before the next raw record.
+
+    Raises:
+        ValueError if there are not enough bytes to read a stat array.
+    """
+    # Read the requested length instead of the length of the struct.
+    # The data is compressed and must be decompressed before it will fill the final list of structs.
+    buffer = raw_file.read(record.pcomplen)
+    decompressed = zlib.decompress(buffer)
+
+    # The final decompressed data is an array of structs, with the length determined by the raw record.
+    uncompressed_len = ctypes.sizeof(tstat_cls)
+    record_count = record.nlist if isinstance(record, atop_1_26.Record) else record.ndeviat
+    tstats = []
+    for index in range(record_count):
+        # Reconstruct one TStat struct for every possible byte chunk, incrementing the offset each pass. For example:
+        # First pass: 0 - 21650
+        # Second pass: 21651 - 43300
+        start = index * uncompressed_len
+        end = uncompressed_len * (index + 1)
+        tstat = tstat_cls.from_buffer_copy(decompressed[start:end])
+        tstats.append(tstat)
+    return tstats
 
 
 def struct_to_dict(struct: ctypes.Structure) -> dict:
