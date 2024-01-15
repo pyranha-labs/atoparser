@@ -35,7 +35,7 @@ For full information on the amazing performance monitoring software that creates
 ## Compatibility
 
 - Supports Python 3.10+
-- Supports Atop 1.26 and 2.3.0 through 2.8.1.
+- Supports Atop 1.26 and 2.3.0 through 2.9.0.
 
 
 ## Getting Started

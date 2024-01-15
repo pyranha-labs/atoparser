@@ -33,6 +33,7 @@ from pyatop.structs import atop_2_5
 from pyatop.structs import atop_2_6
 from pyatop.structs import atop_2_7
 from pyatop.structs import atop_2_8
+from pyatop.structs import atop_2_9
 
 _VERSIONS = [
     atop_1_26,
@@ -42,6 +43,7 @@ _VERSIONS = [
     atop_2_6,
     atop_2_7,
     atop_2_8,
+    atop_2_9,
 ]
 Header = Union[tuple(module.Header for module in _VERSIONS)]
 Record = Union[tuple(module.Record for module in _VERSIONS)]
