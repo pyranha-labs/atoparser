@@ -2,6 +2,7 @@ PROJECT_ROOT := $(dir $(realpath $(lastword $(MAKEFILE_LIST))))
 SETUP_CFG := $(PROJECT_ROOT)setup.cfg
 PYTHON_BIN := python3.10
 NAME := atoparser
+UPSTREAM := git@github.com:pyranha-labs/atoparser.git
 
 
 ##### Initial Development Setups and Configurations #####
@@ -10,14 +11,22 @@ NAME := atoparser
 .PHONY: setup
 setup:
 	ln -sfnv $(PROJECT_ROOT).hooks/pre-push $(PROJECT_ROOT).git/hooks/pre-push
+	git remote add upstream $(UPSTREAM)
+	git fetch upstream
 
 # Create python virtual environment for development/testing.
 .PHONY: venv
 venv:
 	$(PYTHON_BIN) -m venv $(PROJECT_ROOT).venv && \
-	source $(PROJECT_ROOT).venv/bin/activate && \
+	ln -sfnv $(PROJECT_ROOT).venv/bin/activate $(PROJECT_ROOT)activate && \
+	source $(PROJECT_ROOT)activate && \
 	pip install -r requirements-dev.txt && \
-	echo $(PROJECT_ROOT) > .venv/lib/$(PYTHON_BIN)/site-packages/$(NAME).pth
+	echo $(PROJECT_ROOT) > $(PROJECT_ROOT).venv/lib/$(PYTHON_BIN)/site-packages/$(NAME).pth
+
+# Clean the python virtual environment.
+.PHONY: clean-venv
+clean-venv:
+	rm -r $(PROJECT_ROOT)activate $(PROJECT_ROOT).venv
 
 
 ##### Quality Assurance #####
