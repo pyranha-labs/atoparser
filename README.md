@@ -33,7 +33,8 @@ For full information on the amazing performance monitoring software that creates
     * [Read an Atop log with the example JSON command](#read-an-atop-log-with-the-example-json-command)
     * [Iterate over the C structs as Python objects](#iterate-over-the-c-structs-as-python-objects)
     * [Convert the C structs into JSON compatible objects](#convert-the-c-structs-into-json-compatible-objects)
-    * [Add a new version](#add-a-new-version)
+    * [Contribute](#contribute)
+    * [Advanced Guides](#advanced-guides)
 
 
 ## Compatibility
@@ -99,19 +100,10 @@ with open(file, 'rb') as raw_file:
     print(json.dumps(atop_helpers.struct_to_dict(header), indent=2))
 ```
 
+### Contribute
 
-### Add a new version
+Refer to the [Contributing Guide](CONTRIBUTING.md) for information on how to contribute to this project.
 
-1. Copy the previous struct definition in `atoparser/atop_structs/` to a new file by the `<major>_<minor>` version.
+### Advanced Guides
 
-1. Update any individual struct definitions as needed. Additional guidelines for this process outlined in the files.
-
-1. Update the `atoparser/atop_helpers.py` file to include the new version in the imports and `_VERSIONS` list.
-
-1. Use the `utils/build_atop.sh` script to generate a new sample Atop log file, and place in `atoparser/test/files/`.
-
-1. Compress the new log with `gzip` to reduce storage overhead.
-
-1. Add new tests to `atoparser/test/test_atoparser.py` to ensure the new version is parsed correctly.
-
-1. Update the `README.md` file to include the new supported version.
+Refer to [Advanced How Tos](docs/HOW_TO.md) for more advanced topics, such as adding a new Atop version.
