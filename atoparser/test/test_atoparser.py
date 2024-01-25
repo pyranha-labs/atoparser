@@ -10,8 +10,8 @@ from typing import Callable
 
 import pytest
 
-from atoparser import atop_helpers
-from atoparser import atop_reader
+import atoparser
+from atoparser import reader
 from atoparser.parsers import atop_1_26 as atop_1_26_parsers
 from atoparser.structs import atop_1_26 as atop_1_26_structs
 
@@ -19,8 +19,8 @@ TEST_FILE_DIR = os.path.join(os.path.dirname(__file__), "files")
 
 # Store raw byes from an Atop file which can be used to simulate calling struct readers while raising errors.
 with gzip.open(os.path.join(TEST_FILE_DIR, "atop_1_26.log.gz")) as raw_file:
-    HEADER_BYTES = bytearray(atop_helpers.get_header(raw_file))
-    record = atop_helpers.get_record(raw_file, atop_1_26_structs.Record)
+    HEADER_BYTES = bytearray(atoparser.get_header(raw_file))
+    record = atoparser.get_record(raw_file, atop_1_26_structs.Record)
     RECORD_BYTES = bytearray(record)
     SSTAT_BYTES = raw_file.read(record.scomplen)
 
@@ -1331,13 +1331,13 @@ def _read_log(log: str) -> list[dict]:
     samples = []
     opener = open if not log.endswith(".gz") else gzip.open
     with opener(log, "rb") as raw_file:
-        header = atop_helpers.get_header(raw_file)
-        for index, (record, sstat, tstat) in enumerate(atop_helpers.generate_statistics(raw_file, header)):
+        header = atoparser.get_header(raw_file)
+        for index, (record, sstat, tstat) in enumerate(atoparser.generate_statistics(raw_file, header)):
             converted = {
-                "header": atop_helpers.struct_to_dict(header),
-                "record": atop_helpers.struct_to_dict(record),
-                "sstat": atop_helpers.struct_to_dict(sstat),
-                "tstat": [atop_helpers.struct_to_dict(stat) for stat in tstat],
+                "header": atoparser.struct_to_dict(header),
+                "record": atoparser.struct_to_dict(record),
+                "sstat": atoparser.struct_to_dict(sstat),
+                "tstat": [atoparser.struct_to_dict(stat) for stat in tstat],
             }
             converted["header"]["semantic_version"] = header.semantic_version
             converted["record"]["record_index"] = index
@@ -1350,9 +1350,9 @@ def _read_parseables(log: str, parseables: list[str], module: ModuleType) -> lis
     samples = []
     opener = open if not log.endswith(".gz") else gzip.open
     with opener(log, "rb") as raw_file:
-        header = atop_helpers.get_header(raw_file)
+        header = atoparser.get_header(raw_file)
         parsers = {parseable: getattr(module, f"parse_{parseable}") for parseable in parseables}
-        for record, sstat, tstat in atop_helpers.generate_statistics(raw_file, header, raise_on_truncation=False):
+        for record, sstat, tstat in atoparser.generate_statistics(raw_file, header, raise_on_truncation=False):
             sample = {}
             for parseable in parseables:
                 for result in parsers[parseable](header, record, sstat, tstat):
@@ -1361,12 +1361,12 @@ def _read_parseables(log: str, parseables: list[str], module: ModuleType) -> lis
     return samples
 
 
-def _sstat_to_simple_dict(sstat: dict | atop_helpers.SStat) -> dict:
+def _sstat_to_simple_dict(sstat: dict | atoparser.SStat) -> dict:
     """Convert sstat structs into simplified dictionaries for comparison operations."""
     # Only pull enough values prove bytes were read into structs successfully in the correct order,
     # without overwhelming test output.
-    if isinstance(sstat, atop_helpers.SStat):
-        sstat = atop_helpers.struct_to_dict(sstat)
+    if isinstance(sstat, atoparser.SStat):
+        sstat = atoparser.struct_to_dict(sstat)
     simple_sstat = {
         "cpu": {
             "nrcpu": sstat["cpu"]["nrcpu"],
@@ -1388,12 +1388,12 @@ def _sstat_to_simple_dict(sstat: dict | atop_helpers.SStat) -> dict:
     return simple_sstat
 
 
-def _tstat_to_simple_dict(tstat: dict | atop_helpers.TStat) -> dict:
+def _tstat_to_simple_dict(tstat: dict | atoparser.TStat) -> dict:
     """Convert tstat structs into simplified dictionaries for comparison operations."""
     # Only pull enough values prove bytes were read into structs successfully in the correct order,
     # without overwhelming test output.
-    if isinstance(tstat, atop_helpers.TStat):
-        tstat = atop_helpers.struct_to_dict(tstat)
+    if isinstance(tstat, atoparser.TStat):
+        tstat = atoparser.struct_to_dict(tstat)
     simple_tstat = {
         "gen": {
             "cmdline": tstat["gen"]["cmdline"],
@@ -1463,7 +1463,7 @@ def test_get_header(test_case: dict, function_tester: Callable) -> None:
         """Convert raw byte sample into dict for tests."""
         return json.loads(
             json.dumps(
-                atop_helpers.struct_to_dict(atop_helpers.get_header(raw_file)),
+                atoparser.struct_to_dict(atoparser.get_header(raw_file)),
                 sort_keys=True,
             )
         )
@@ -1475,17 +1475,17 @@ def test_get_header(test_case: dict, function_tester: Callable) -> None:
 def test_get_record(test_case: dict, function_tester: Callable) -> None:
     """Unit tests for get_record."""
 
-    def _get_record(raw_file: io.BytesIO, record_cls: atop_helpers.Record) -> dict:
+    def _get_record(raw_file: io.BytesIO, record_cls: atoparser.Record) -> dict:
         """Convert raw byte sample into dict for tests."""
         return json.loads(
             json.dumps(
-                atop_helpers.struct_to_dict(atop_helpers.get_record(raw_file, record_cls)),
+                atoparser.struct_to_dict(atoparser.get_record(raw_file, record_cls)),
                 sort_keys=True,
             )
         )
 
     # Read the header to ensure the offset is correct prior to reading the record:
-    atop_helpers.get_header(test_case["args"][0])
+    atoparser.get_header(test_case["args"][0])
     function_tester(test_case, _get_record)
 
 
@@ -1493,23 +1493,23 @@ def test_get_record(test_case: dict, function_tester: Callable) -> None:
 def test_get_sstat(test_case: dict, function_tester: Callable) -> None:
     """Unit tests for get_sstat."""
 
-    def _get_sstat(raw_file: io.BytesIO, sstat_cls: atop_helpers.SStat) -> dict:
+    def _get_sstat(raw_file: io.BytesIO, sstat_cls: atoparser.SStat) -> dict:
         """Convert raw byte sample into dict for tests."""
         return json.loads(
             json.dumps(
-                _sstat_to_simple_dict(atop_helpers.get_sstat(raw_file, record, sstat_cls)),
+                _sstat_to_simple_dict(atoparser.get_sstat(raw_file, record, sstat_cls)),
                 sort_keys=True,
             )
         )
 
     # Read the header and record to ensure the offset is correct prior to reading the stats.
     mock_file = test_case["args"][0]
-    atop_helpers.get_header(mock_file)
-    record = atop_helpers.get_record(mock_file, atop_1_26_structs.Record)
+    atoparser.get_header(mock_file)
+    record = atoparser.get_record(mock_file, atop_1_26_structs.Record)
     function_tester(test_case, _get_sstat)
 
 
-@pytest.mark.parametrize_test_case("parseable", atop_reader.PARSEABLES)
+@pytest.mark.parametrize_test_case("parseable", reader.PARSEABLES)
 def test_parseable_map(parseable: str) -> None:
     """Unit test to ensure every parseable has a corresponding parse_* function."""
     assert (

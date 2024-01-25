@@ -80,11 +80,11 @@ atoparser ~/atop.log -P CPU --pretty
 
 ### Iterate over the C structs as Python objects:  
 ```python
-from atoparser import atop_helpers
+import atoparser
 
 with open(file, 'rb') as raw_file:
-    header = atop_helpers.get_header(raw_file)
-    for record, sstat, tstat in atop_helpers.generate_statistics(raw_file, header):
+    header = atoparser.get_header(raw_file)
+    for record, sstat, tstat in atoparser.generate_statistics(raw_file, header):
         total_cycles = record.interval * sstat.cpu.nrcpu * header.hertz
         usage = 1 - sstat.cpu.all.itime / total_cycles
         print(f'CPU usage was {usage:.02%}')
@@ -93,11 +93,11 @@ with open(file, 'rb') as raw_file:
 ### Convert the C structs into JSON compatible objects:  
 ```python
 import json
-from atoparser import atop_helpers
+import atoparser
 
 with open(file, 'rb') as raw_file:
-    header = atop_helpers.get_header(raw_file)
-    print(json.dumps(atop_helpers.struct_to_dict(header), indent=2))
+    header = atoparser.get_header(raw_file)
+    print(json.dumps(atoparser.struct_to_dict(header), indent=2))
 ```
 
 ### Contribute

@@ -1,6 +1,6 @@
 """Parser function used to convert Atop structs in 1.26 into "parseable" output based on the signature name."""
 
-from atoparser import atop_helpers
+from atoparser import utils
 from atoparser.structs import atop_1_26
 
 # Disable the following pylint warnings to allow functions to match a consistent type across all parseables.
@@ -9,10 +9,10 @@ from atoparser.structs import atop_1_26
 
 
 def parse_cpu(
-    header: atop_helpers.Header,
-    record: atop_helpers.Record,
-    sstat: atop_helpers.SStat,
-    tstats: list[atop_helpers.TStat],
+    header: utils.Header,
+    record: utils.Record,
+    sstat: utils.SStat,
+    tstats: list[utils.TStat],
 ) -> dict:
     """Retrieves statistics for Atop 'cpu' parseable representing per core usage."""
     for index, cpu in enumerate(sstat.cpu.cpu):
@@ -38,10 +38,10 @@ def parse_cpu(
 
 
 def parse_CPL(
-    header: atop_helpers.Header,
-    record: atop_helpers.Record,
-    sstat: atop_helpers.SStat,
-    tstats: list[atop_helpers.TStat],
+    header: utils.Header,
+    record: utils.Record,
+    sstat: utils.SStat,
+    tstats: list[utils.TStat],
 ) -> dict:
     """Retrieves statistics for Atop 'CPL' parseable representing system load."""
     values = {
@@ -58,10 +58,10 @@ def parse_CPL(
 
 
 def parse_CPU(
-    header: atop_helpers.Header,
-    record: atop_helpers.Record,
-    sstat: atop_helpers.SStat,
-    tstats: list[atop_helpers.TStat],
+    header: utils.Header,
+    record: utils.Record,
+    sstat: utils.SStat,
+    tstats: list[utils.TStat],
 ) -> dict:
     """Statistics for Atop 'CPU' parseable representing usage across cores combined."""
     values = {
@@ -83,10 +83,10 @@ def parse_CPU(
 
 
 def parse_DSK(
-    header: atop_helpers.Header,
-    record: atop_helpers.Record,
-    sstat: atop_helpers.SStat,
-    tstats: list[atop_helpers.TStat],
+    header: utils.Header,
+    record: utils.Record,
+    sstat: utils.SStat,
+    tstats: list[utils.TStat],
 ) -> dict:
     """Retrieves statistics for Atop 'DSK' parseable representing disk/drive usage."""
     for disk in sstat.dsk.dsk:
@@ -107,10 +107,10 @@ def parse_DSK(
 
 
 def parse_LVM(
-    header: atop_helpers.Header,
-    record: atop_helpers.Record,
-    sstat: atop_helpers.SStat,
-    tstats: list[atop_helpers.TStat],
+    header: utils.Header,
+    record: utils.Record,
+    sstat: utils.SStat,
+    tstats: list[utils.TStat],
 ) -> dict:
     """Retrieves statistics for Atop 'LVM' parseable representing logical volume usage."""
     for lvm in sstat.dsk.lvm:
@@ -131,10 +131,10 @@ def parse_LVM(
 
 
 def parse_MDD(
-    header: atop_helpers.Header,
-    record: atop_helpers.Record,
-    sstat: atop_helpers.SStat,
-    tstats: list[atop_helpers.TStat],
+    header: utils.Header,
+    record: utils.Record,
+    sstat: utils.SStat,
+    tstats: list[utils.TStat],
 ) -> dict:
     """Retrieves statistics for Atop 'MDD' parseable representing multiple device drive usage."""
     for mdd in sstat.dsk.mdd:
@@ -155,10 +155,10 @@ def parse_MDD(
 
 
 def parse_MEM(
-    header: atop_helpers.Header,
-    record: atop_helpers.Record,
-    sstat: atop_helpers.SStat,
-    tstats: list[atop_helpers.TStat],
+    header: utils.Header,
+    record: utils.Record,
+    sstat: utils.SStat,
+    tstats: list[utils.TStat],
 ) -> dict:
     """Retrieves statistics for Atop 'MEM' parseable representing memory usage."""
     values = {
@@ -176,10 +176,10 @@ def parse_MEM(
 
 
 def parse_NETL(
-    header: atop_helpers.Header,
-    record: atop_helpers.Record,
-    sstat: atop_helpers.SStat,
-    tstats: list[atop_helpers.TStat],
+    header: utils.Header,
+    record: utils.Record,
+    sstat: utils.SStat,
+    tstats: list[utils.TStat],
 ) -> dict:
     """Retrieves statistics for Atop 'NET' parseable representing network usage on lower interfaces."""
     for interface in sstat.intf.intf:
@@ -201,10 +201,10 @@ def parse_NETL(
 
 
 def parse_NETU(
-    header: atop_helpers.Header,
-    record: atop_helpers.Record,
-    sstat: atop_helpers.SStat,
-    tstats: list[atop_helpers.TStat],
+    header: utils.Header,
+    record: utils.Record,
+    sstat: utils.SStat,
+    tstats: list[utils.TStat],
 ) -> dict:
     """Retrieves statistics for Atop 'NET' parseable representing network usage on upper interfaces."""
     values = {
@@ -224,10 +224,10 @@ def parse_NETU(
 
 
 def parse_PAG(
-    header: atop_helpers.Header,
-    record: atop_helpers.Record,
-    sstat: atop_helpers.SStat,
-    tstats: list[atop_helpers.TStat],
+    header: utils.Header,
+    record: utils.Record,
+    sstat: utils.SStat,
+    tstats: list[utils.TStat],
 ) -> dict:
     """Retrieves statistics for Atop 'PAG' parseable representing paging space usage."""
     values = {
@@ -243,10 +243,10 @@ def parse_PAG(
 
 
 def parse_PRC(
-    header: atop_helpers.Header,
-    record: atop_helpers.Record,
-    sstat: atop_helpers.SStat,
-    tstats: list[atop_helpers.TStat],
+    header: utils.Header,
+    record: utils.Record,
+    sstat: utils.SStat,
+    tstats: list[utils.TStat],
 ) -> dict:
     """Retrieves statistics for Atop 'PRC' parseable representing process cpu usage."""
     for stat in tstats:
@@ -270,10 +270,10 @@ def parse_PRC(
 
 
 def parse_PRD(
-    header: atop_helpers.Header,
-    record: atop_helpers.Record,
-    sstat: atop_helpers.SStat,
-    tstats: list[atop_helpers.TStat],
+    header: utils.Header,
+    record: utils.Record,
+    sstat: utils.SStat,
+    tstats: list[utils.TStat],
 ) -> dict:
     """Retrieves statistics for Atop 'PRD' parseable representing process drive usage."""
     for stat in tstats:
@@ -295,10 +295,10 @@ def parse_PRD(
 
 
 def parse_PRG(
-    header: atop_helpers.Header,
-    record: atop_helpers.Record,
-    sstat: atop_helpers.SStat,
-    tstats: list[atop_helpers.TStat],
+    header: utils.Header,
+    record: utils.Record,
+    sstat: utils.SStat,
+    tstats: list[utils.TStat],
 ) -> dict:
     """Retrieves statistics for Atop 'PRG' parseable representing process generic details."""
     for stat in tstats:
@@ -331,10 +331,10 @@ def parse_PRG(
 
 
 def parse_PRM(
-    header: atop_helpers.Header,
-    record: atop_helpers.Record,
-    sstat: atop_helpers.SStat,
-    tstats: list[atop_helpers.TStat],
+    header: utils.Header,
+    record: utils.Record,
+    sstat: utils.SStat,
+    tstats: list[utils.TStat],
 ) -> dict:
     """Retrieves statistics for Atop 'PRM' parseable representing process memory usage."""
     for stat in tstats:
@@ -357,10 +357,10 @@ def parse_PRM(
 
 
 def parse_PRN(
-    header: atop_helpers.Header,
-    record: atop_helpers.Record,
-    sstat: atop_helpers.SStat,
-    tstats: list[atop_helpers.TStat],
+    header: utils.Header,
+    record: utils.Record,
+    sstat: utils.SStat,
+    tstats: list[utils.TStat],
 ) -> dict:
     """Retrieves statistics for Atop 'PRN' parseable representing process network activity."""
     for stat in tstats:
@@ -386,10 +386,10 @@ def parse_PRN(
 
 
 def parse_SWP(
-    header: atop_helpers.Header,
-    record: atop_helpers.Record,
-    sstat: atop_helpers.SStat,
-    tstats: list[atop_helpers.TStat],
+    header: utils.Header,
+    record: utils.Record,
+    sstat: utils.SStat,
+    tstats: list[utils.TStat],
 ) -> dict:
     """Retrieves statistics for Atop 'SWP' parseable representing swap space usage."""
     values = {
