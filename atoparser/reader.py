@@ -6,7 +6,7 @@ import argparse
 import gzip
 import json
 
-from atoparser import atop_helpers
+import atoparser
 from atoparser.parsers import atop_1_26
 
 PARSEABLES = ["cpu", "CPL", "CPU", "DSK", "LVM", "MDD", "MEM", "NETL", "NETU", "PAG", "PRC", "PRG", "PRM", "PRN", "SWP"]
@@ -60,7 +60,7 @@ def main() -> None:
         samples = []
         opener = open if ".gz" not in file else gzip.open
         with opener(file, "rb") as raw_file:
-            header = atop_helpers.get_header(raw_file)
+            header = atoparser.get_header(raw_file)
             if args.parseables and header.semantic_version not in PARSEABLE_MAP:
                 samples.append(
                     {
@@ -70,7 +70,7 @@ def main() -> None:
                 )
                 continue
             parsers = PARSEABLE_MAP.get(header.semantic_version, PARSEABLE_MAP["1.26"])
-            for record, sstat, tstat in atop_helpers.generate_statistics(raw_file, header, raise_on_truncation=False):
+            for record, sstat, tstat in atoparser.generate_statistics(raw_file, header, raise_on_truncation=False):
                 if args.parseables:
                     for parseable in args.parseables:
                         for sample in parsers[parseable](header, record, sstat, tstat):
@@ -78,12 +78,12 @@ def main() -> None:
                             samples.append(sample)
                 else:
                     converted = {
-                        "header": atop_helpers.struct_to_dict(header),
-                        "record": atop_helpers.struct_to_dict(record),
-                        "sstat": atop_helpers.struct_to_dict(sstat),
+                        "header": atoparser.struct_to_dict(header),
+                        "record": atoparser.struct_to_dict(record),
+                        "sstat": atoparser.struct_to_dict(sstat),
                     }
                     if args.tstats:
-                        converted["tstat"] = [atop_helpers.struct_to_dict(stat) for stat in tstat]
+                        converted["tstat"] = [atoparser.struct_to_dict(stat) for stat in tstat]
                     samples.append(converted)
         print(json.dumps(samples, indent=2 if args.pretty_print else None))
 

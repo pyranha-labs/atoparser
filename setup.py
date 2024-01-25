@@ -72,7 +72,7 @@ setup(
     },
     entry_points={
         "console_scripts": [
-            "atoparser = atoparser.atop_reader:main",
+            "atoparser = atoparser.reader:main",
         ]
     },
 )
