@@ -32,9 +32,10 @@ ACCTACTIVE = 0x00000001
 IOSTAT = 0x00000004
 NETATOP = 0x00000010
 NETATOPD = 0x00000020
-DOCKSTAT = 0x00000040
+CONTAINERSTAT = 0x00000040
 GPUSTAT = 0x00000080
 CGROUPV2 = 0x00000100
+NETATOPBPF = 0x00001000
 
 # Definitions from photoproc.h
 PNAMLEN = 15
@@ -77,7 +78,33 @@ class Header(atop_2_8.Header):
             raise ValueError(f"File has incompatible Atop format. Struct length evaluations (found, expected): {sizes}")
 
 
-Record = atop_2_3.Record
+class Record(ctypes.Structure):
+    """Top level struct to describe basic process information, and the following SStat and TStat structs.
+
+    C Name: rawrecord
+    C Location: rawlog.h
+    """
+
+    _fields_ = [
+        ("curtime", time_t),
+        ("flags", ctypes.c_ushort),
+        ("sfuture", ctypes.c_ushort * 3),
+        ("scomplen", ctypes.c_uint),
+        ("pcomplen", ctypes.c_uint),
+        ("interval", ctypes.c_uint),
+        ("ndeviat", ctypes.c_uint),
+        ("nactproc", ctypes.c_uint),
+        ("ntask", ctypes.c_uint),
+        ("totproc", ctypes.c_uint),
+        ("totrun", ctypes.c_uint),
+        ("totslpi", ctypes.c_uint),
+        ("totslpu", ctypes.c_uint),
+        ("totzomb", ctypes.c_uint),
+        ("nexit", ctypes.c_uint),
+        ("noverflow", ctypes.c_uint),
+        ("totidle", ctypes.c_uint),
+        ("ifuture", ctypes.c_uint * 5),
+    ]
 
 
 class MemStat(ctypes.Structure):

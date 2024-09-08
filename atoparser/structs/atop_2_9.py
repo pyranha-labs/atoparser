@@ -75,7 +75,7 @@ class Header(atop_2_8.Header):
             raise ValueError(f"File has incompatible Atop format. Struct length evaluations (found, expected): {sizes}")
 
 
-Record = atop_2_3.Record
+Record = atop_2_8.Record
 
 
 MemStat = atop_2_8.MemStat
