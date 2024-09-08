@@ -102,7 +102,38 @@ class Header(ctypes.Structure, HeaderMixin):
             raise ValueError(f"File has incompatible Atop format. Struct length evaluations (found, expected): {sizes}")
 
 
-Record = atop_2_3.Record
+class Record(ctypes.Structure):
+    """Top level struct to describe basic process information, and the following SStat and TStat structs.
+
+    C Name: rawrecord
+    C Location: rawlog.h
+    """
+
+    _fields_ = [
+        ("curtime", time_t),
+        ("flags", ctypes.c_ushort),
+        ("ncgroups", ctypes.c_ushort),
+        ("sfuture", ctypes.c_ushort * 2),
+        ("scomplen", ctypes.c_uint),
+        ("pcomplen", ctypes.c_uint),
+        ("interval", ctypes.c_uint),
+        ("ndeviat", ctypes.c_uint),
+        ("nactproc", ctypes.c_uint),
+        ("ntask", ctypes.c_uint),
+        ("totproc", ctypes.c_uint),
+        ("totrun", ctypes.c_uint),
+        ("totslpi", ctypes.c_uint),
+        ("totslpu", ctypes.c_uint),
+        ("totzomb", ctypes.c_uint),
+        ("nexit", ctypes.c_uint),
+        ("noverflow", ctypes.c_uint),
+        ("totidle", ctypes.c_uint),
+        ("ccomplen", ctypes.c_uint),
+        ("coriglen", ctypes.c_uint),
+        ("ncgpids", ctypes.c_uint),
+        ("icomplen", ctypes.c_uint),
+        ("ifuture", ctypes.c_uint),
+    ]
 
 
 class MemStat(ctypes.Structure):
