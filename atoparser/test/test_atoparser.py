@@ -338,6 +338,36 @@ TEST_CASES = {
                 },
             },
         },
+        "2.11": {
+            "args": [
+                os.path.join(TEST_FILE_DIR, "atop_2_11.log.gz"),
+            ],
+            "returns": {
+                "aversion": 33291,
+                "cstatlen": 432,
+                "hertz": 100,
+                "magic": 4276993775,
+                "osrel": 6,
+                "ossub": 11,
+                "osvers": 5,
+                "pagesize": 4096,
+                "pidwidth": 5,
+                "rawheadlen": 480,
+                "rawreclen": 96,
+                "semantic_version": "2.11",
+                "sstatlen": 1064016,
+                "supportflags": 309,
+                "tstatlen": 968,
+                "utsname": {
+                    "domain": "(none)",
+                    "machine": "x86_64",
+                    "nodename": "fires-of-mount-doom1",
+                    "release": "6.5.11-linuxkit",
+                    "sysname": "Linux",
+                    "version": "#1 SMP PREEMPT Wed Dec  6 17:08:31 UTC 2023",
+                },
+            },
+        },
     },
     "file_record": {
         "1.26": {
@@ -609,6 +639,35 @@ TEST_CASES = {
                 "totzomb": 0,
             },
         },
+        "2.11": {
+            "args": [
+                os.path.join(TEST_FILE_DIR, "atop_2_11.log.gz"),
+            ],
+            "returns": {
+                "ccomplen": 63,
+                "coriglen": 440,
+                "curtime": 1726329658,
+                "flags": 288,
+                "icomplen": 16,
+                "interval": 1,
+                "nactproc": 1,
+                "ncgpids": 2,
+                "ncgroups": 1,
+                "ndeviat": 6,
+                "nexit": 0,
+                "noverflow": 0,
+                "ntask": 6,
+                "pcomplen": 305,
+                "record_index": 4,
+                "scomplen": 1421,
+                "totidle": 0,
+                "totproc": 2,
+                "totrun": 1,
+                "totslpi": 3,
+                "totslpu": 0,
+                "totzomb": 0,
+            },
+        },
     },
     "file_sstat": {
         "1.26": {
@@ -875,6 +934,30 @@ TEST_CASES = {
                 "sample_index": 4,
             },
         },
+        "2.11": {
+            "args": [
+                os.path.join(TEST_FILE_DIR, "atop_2_11.log.gz"),
+            ],
+            "returns": {
+                "cpu": {
+                    "nrcpu": 12,
+                    "lavg1": 0.47999998927116394,
+                },
+                "mem": {
+                    "physmem": 2008626,
+                    "freemem": 365583,
+                },
+                "intf": {
+                    "nrintf": 4,
+                    "intf": [{"name": "lo"}],
+                },
+                "dsk": {
+                    "ndsk": 3,
+                    "dsk": [{"name": "vda"}],
+                },
+                "sample_index": 4,
+            },
+        },
     },
     "file_tstat": {
         "1.26": {
@@ -1018,6 +1101,19 @@ TEST_CASES = {
                 },
                 "sample_index": 4,
                 "tstat_index": 2,
+            },
+        },
+        "2.11": {
+            "args": [
+                os.path.join(TEST_FILE_DIR, "atop_2_11.log.gz"),
+            ],
+            "returns": {
+                "gen": {
+                    "cmdline": "",
+                    "name": "atop",
+                },
+                "sample_index": 4,
+                "tstat_index": 5,
             },
         },
     },
@@ -1427,8 +1523,13 @@ def test_file_header(test_case: dict, function_tester: Callable) -> None:
     """Read a file and ensure the values in the header match expectations."""
 
     def _get_struct(log: str) -> dict:
-        """Read a log and return the header from the first sample (headers are the same across all samples)."""
-        return _read_log(log)[0]["header"]
+        """Read a log and return the header."""
+        opener = open if not log.endswith(".gz") else gzip.open
+        with opener(log, "rb") as raw_file:
+            raw_header = atoparser.get_header(raw_file)
+            header = atoparser.struct_to_dict(raw_header)
+            header["semantic_version"] = raw_header.semantic_version
+            return json.loads(json.dumps(header, sort_keys=True))
 
     function_tester(test_case, _get_struct)
 

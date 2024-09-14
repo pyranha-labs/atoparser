@@ -5,19 +5,12 @@
 # Ensure the whole script exits on failures.
 set -e
 
-# Force execution in docker to ensure reproducibility.
-if [ ! -f /.dockerenv ]; then
-  echo "Please run inside docker to isolate dependencies, prevent modifications to system, and ensure reproducibility. Aborting."
-  echo "Example: docker run --rm -it -h fires-of-mount-doom1.theshire.co -v ~/Development/atoparser:/mnt/atoparser ubuntu:jammy bash -c '/mnt/atoparser/utils/build_atop.sh --atop v2.10.0'"
-  exit 1
-fi
-
 # Pull out user args to modify default behavior.
 atop_version=''
 while [[ $# -gt 0 ]]; do
   case $1 in
     --atop)
-      if [ -z "$2" ]; then echo "Must provide Atop version. Example: --atop v2.10.0"; exit 1; fi
+      if [ -z "$2" ]; then echo "Must provide Atop version. Example: --atop v2.11.0"; exit 1; fi
       atop_version=$2
       shift
     ;;
@@ -28,6 +21,13 @@ done
 if [ -z "${atop_version}" ]; then
   echo "No atop version specified. Please provide an Atop version as v<major>.<minor>.<maintenance> to continue. Example: --atop v2.10.0"
   exit 1
+fi
+
+# Force execution in docker to ensure reproducibility.
+if [ ! -f /.dockerenv ]; then
+  echo "Running in docker."
+  docker run --rm -it --platform linux/amd64 -h fires-of-mount-doom1.theshire.co -v `pwd`:/mnt/atoparser ubuntu:jammy bash -c "/mnt/atoparser/utils/build_atop.sh --atop ${atop_version}"
+  exit 0
 fi
 
 # Turn on command echoing to show all commands as they run.

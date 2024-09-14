@@ -20,7 +20,9 @@ time_t = ctypes.c_long
 count_t = ctypes.c_longlong
 
 # Definitions from sys/types.h
+c_int32_t = ctypes.c_int32
 off_t = ctypes.c_long
+pid_t = ctypes.c_int
 
 
 class HeaderMixin:
