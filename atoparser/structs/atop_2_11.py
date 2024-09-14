@@ -10,7 +10,7 @@ Struct ordering matches the C source to help with comparisons.
 If structs match exactly from a previous version, they are reused via aliasing.
 
 See https://github.com/Atoptool/atop for more information and full details about each field.
-Using schemas and structs from Atop 2.8.0.
+Using schemas and structs from Atop 2.11.0.
 """
 
 import ctypes
@@ -19,6 +19,8 @@ from atoparser.structs import atop_1_26
 from atoparser.structs import atop_2_3
 from atoparser.structs import atop_2_4
 from atoparser.structs import atop_2_7
+from atoparser.structs import atop_2_8
+from atoparser.structs import atop_2_10
 from atoparser.structs.shared import HeaderMixin
 from atoparser.structs.shared import UTSName
 from atoparser.structs.shared import count_t
@@ -33,14 +35,16 @@ ACCTACTIVE = 0x00000001
 IOSTAT = 0x00000004
 NETATOP = 0x00000010
 NETATOPD = 0x00000020
-DOCKSTAT = 0x00000040
+CONTAINERSTAT = 0x00000040
 GPUSTAT = 0x00000080
 CGROUPV2 = 0x00000100
+NETATOPBPF = 0x00001000
 
 # Definitions from photoproc.h
 PNAMLEN = 15
 CMDLEN = 255
 CGRLEN = 64
+UTSLEN = 15
 
 # Definitions from photosyst.h
 MAXCPU = 2048
@@ -86,9 +90,10 @@ class Header(ctypes.Structure, HeaderMixin):
         ("osrel", ctypes.c_int),
         ("osvers", ctypes.c_int),
         ("ossub", ctypes.c_int),
-        ("ifuture", ctypes.c_int * 6),
+        ("cstatlen", ctypes.c_int),
+        ("ifuture", ctypes.c_int * 5),
     ]
-    supported_version = "2.8"
+    supported_version = "2.11"
 
     def check_compatibility(self) -> None:
         """Verify if the loaded values are compatible with this header version."""
@@ -166,16 +171,16 @@ class MemStat(ctypes.Structure):
         ("shmrss", count_t),
         ("shmswp", count_t),
         ("slabreclaim", count_t),
-        ("tothugepage", count_t),
-        ("freehugepage", count_t),
-        ("hugepagesz", count_t),
+        ("stothugepage", count_t),
+        ("sfreehugepage", count_t),
+        ("shugepagesz", count_t),
         ("vmwballoon", count_t),
         ("zfsarcsize", count_t),
         ("swapcached", count_t),
         ("ksmsharing", count_t),
         ("ksmshared", count_t),
-        ("zswstored", count_t),
-        ("zswtotpool", count_t),
+        ("zswapped", count_t),
+        ("zswap", count_t),
         ("oomkills", count_t),
         ("compactstall", count_t),
         ("pgmigrate", count_t),
@@ -183,7 +188,14 @@ class MemStat(ctypes.Structure):
         ("pgouts", count_t),
         ("pgins", count_t),
         ("pagetables", count_t),
-        ("cfuture", count_t * 4),
+        ("zswouts", count_t),
+        ("zswins", count_t),
+        ("ltothugepage", count_t),
+        ("lfreehugepage", count_t),
+        ("lhugepagesz", count_t),
+        ("availablemem", count_t),
+        ("anonhugepage", count_t),
+        ("cfuture", count_t * 5),
     ]
 
 
@@ -208,6 +220,8 @@ class MemPerNUMA(ctypes.Structure):
         ("inactive", count_t),
         ("shmem", count_t),
         ("tothp", count_t),
+        ("freehp", count_t),
+        ("cfuture", count_t * 2),
     ]
 
 
@@ -246,6 +260,7 @@ class CPUPerNUMA(ctypes.Structure):
         ("Stime", count_t),
         ("steal", count_t),
         ("guest", count_t),
+        ("cfuture", count_t * 2),
     ]
 
 
@@ -273,50 +288,10 @@ PerCPU = atop_2_7.PerCPU
 CPUStat = atop_2_7.CPUStat
 
 
-class PerDSK(ctypes.Structure):
-    """Embedded struct to describe per disk information.
-
-    C Name: perdsk
-    C Location: photosyst.h
-    C Parent: dskstat
-    """
-
-    _fields_ = [
-        ("name", ctypes.c_char * MAXDKNAM),
-        ("nread", count_t),
-        ("nrsect", count_t),
-        ("nwrite", count_t),
-        ("nwsect", count_t),
-        ("io_ms", count_t),
-        ("avque", count_t),
-        ("ndisc", count_t),
-        ("ndsect", count_t),
-        ("inflight", count_t),
-        ("cfuture", count_t * 3),
-    ]
+PerDSK = atop_2_8.PerDSK
 
 
-class DSKStat(ctypes.Structure):
-    """Embedded struct to describe overall disk information.
-
-    C Name: dskstat
-    C Location: photosyst.h
-    C Parent: sstat
-    """
-
-    _fields_ = [
-        ("ndsk", ctypes.c_int),
-        ("nmdd", ctypes.c_int),
-        ("nlvm", ctypes.c_int),
-        ("dsk", PerDSK * MAXDSK),
-        ("mdd", PerDSK * MAXMDD),
-        ("lvm", PerDSK * MAXLVM),
-    ]
-    fields_limiters = {
-        "dsk": "ndsk",
-        "mdd": "nmdd",
-        "lvm": "nlvm",
-    }
+DSKStat = atop_2_8.DSKStat
 
 
 PerIntf = atop_2_3.PerIntf
@@ -361,89 +336,60 @@ PerGPU = atop_2_4.PerGPU
 GPUStat = atop_2_4.GPUStat
 
 
-PerIFB = atop_2_4.PerIFB
+class PerIFB(ctypes.Structure):
+    """Embedded struct to describe per InfiniBand statistics.
 
-
-IFBStat = atop_2_4.IFBStat
-
-
-class PerLLC(ctypes.Structure):
-    """Embedded struct to describe basic information per LLC (Last-Level Cache).
-
-    C Name: perllc
+    C Name: perifb
     C Location: photosyst.h
-    C Parent: llcstat
+    C Parent: ifbstat
     """
 
     _fields_ = [
-        ("id", ctypes.c_uint8),
-        ("occupancy", ctypes.c_float),
-        ("mbm_local", count_t),
-        ("mbm_total", count_t),
+        ("ibname", ctypes.c_char * MAXIBNAME),
+        ("portnr", ctypes.c_short),
+        ("lanes", ctypes.c_short),
+        ("rate", count_t),
+        ("rcvb", count_t),
+        ("sndb", count_t),
+        ("rcvp", count_t),
+        ("sndp", count_t),
+        ("cfuture", count_t * 4),
     ]
 
 
-class LLCStat(ctypes.Structure):
-    """Embedded struct to describe all LLCs (Last-Level Cache).
+class IFBStat(ctypes.Structure):
+    """Embedded struct to describe overall InfiniBand statistics.
 
-    C Name: llcstat
+    C Name: ifbstat
     C Location: photosyst.h
     C Parent: sstat
     """
 
     _fields_ = [
-        ("nrllcs", ctypes.c_int),
-        ("perllc", PerLLC * MAXLLC),
+        ("nrports", ctypes.c_int),
+        ("ifb", PerIFB * MAXIBPORT),
     ]
-    fields_limiters = {"perllc": "nrllcs"}
+    fields_limiters = {
+        "ifb": "nrports",
+    }
+
+
+PerLLC = atop_2_8.PerLLC
+
+
+LLCStat = atop_2_8.LLCStat
 
 
 IPv4Stats = atop_1_26.IPv4Stats
 
 
-class ICMPv4Stats(ctypes.Structure):
-    """Embedded struct to describe overall ICMPv4 statistics.
-
-    C Name: icmpv4_stats
-    C Location: netstats.h
-    C Parent: netstat
-    """
-
-    _fields_ = [
-        ("InMsgs", count_t),
-        ("InErrors", count_t),
-        ("InCsumErrors", count_t),
-        ("InDestUnreachs", count_t),
-        ("InTimeExcds", count_t),
-        ("InParmProbs", count_t),
-        ("InSrcQuenchs", count_t),
-        ("InRedirects", count_t),
-        ("InEchos", count_t),
-        ("InEchoReps", count_t),
-        ("InTimestamps", count_t),
-        ("InTimestampReps", count_t),
-        ("InAddrMasks", count_t),
-        ("InAddrMaskReps", count_t),
-        ("OutMsgs", count_t),
-        ("OutErrors", count_t),
-        ("OutDestUnreachs", count_t),
-        ("OutTimeExcds", count_t),
-        ("OutParmProbs", count_t),
-        ("OutSrcQuenchs", count_t),
-        ("OutRedirects", count_t),
-        ("OutEchos", count_t),
-        ("OutEchoReps", count_t),
-        ("OutTimestamps", count_t),
-        ("OutTimestampReps", count_t),
-        ("OutAddrMasks", count_t),
-        ("OutAddrMaskReps", count_t),
-    ]
+ICMPv4Stats = atop_2_8.ICMPv4Stats
 
 
 UDPv4Stats = atop_1_26.UDPv4Stats
 
 
-TCPStats = atop_1_26.TCPStats
+TCPStats = atop_2_10.TCPStats
 
 
 IPv6Stats = atop_1_26.IPv6Stats
@@ -455,23 +401,7 @@ ICMPv6Stats = atop_1_26.ICMPv6Stats
 UDPv6Stats = atop_1_26.UDPv6Stats
 
 
-class NETStat(ctypes.Structure):
-    """Embedded struct to describe overall network statistics.
-
-    C Name: netstat
-    C Location: photosyst.h
-    C Parent: sstat
-    """
-
-    _fields_ = [
-        ("ipv4", IPv4Stats),
-        ("icmpv4", ICMPv4Stats),
-        ("udpv4", UDPv4Stats),
-        ("ipv6", IPv6Stats),
-        ("icmpv6", ICMPv6Stats),
-        ("udpv6", UDPv6Stats),
-        ("tcp", TCPStats),
-    ]
+NETStat = atop_2_10.NETStat
 
 
 class SStat(ctypes.Structure):
@@ -530,11 +460,13 @@ class GEN(ctypes.Structure):
         ("nthrslpi", ctypes.c_int),
         ("nthrslpu", ctypes.c_int),
         ("nthrrun", ctypes.c_int),
+        ("nthridle", ctypes.c_int),
         ("ctid", ctypes.c_int),
         ("vpid", ctypes.c_int),
         ("wasinactive", ctypes.c_int),
-        ("container", ctypes.c_char * 16),
-        ("cgpath", ctypes.c_char * CGRLEN),
+        ("utsname", ctypes.c_char * (UTSLEN + 1)),
+        ("cgroupix", ctypes.c_int),
+        ("ifuture", ctypes.c_int * 4),
     ]
 
 
@@ -555,13 +487,12 @@ class CPU(ctypes.Structure):
         ("policy", ctypes.c_int),
         ("curcpu", ctypes.c_int),
         ("sleepavg", ctypes.c_int),
-        ("cgcpuweight", ctypes.c_int),
-        ("cgcpumax", ctypes.c_int),
-        ("cgcpumaxr", ctypes.c_int),
-        ("ifuture", ctypes.c_int * 3),
+        ("ifuture", ctypes.c_int * 6),
         ("wchan", ctypes.c_char * 16),
         ("rundelay", count_t),
         ("blkdelay", count_t),
+        ("nvcsw", count_t),
+        ("nivcsw", count_t),
         ("cfuture", count_t * 3),
     ]
 
@@ -591,18 +522,34 @@ class MEM(ctypes.Structure):
         ("vlibs", count_t),
         ("vswap", count_t),
         ("vlock", count_t),
-        ("cgmemmax", count_t),
-        ("cgmemmaxr", count_t),
-        ("cgswpmax", count_t),
-        ("cgswpmaxr", count_t),
-        ("cfuture", count_t * 3),
+        ("cfuture", count_t * 7),
     ]
 
 
 NET = atop_2_3.NET
 
 
-GPU = atop_2_4.GPU
+class GPU(ctypes.Structure):
+    """Embedded struct to describe a single process' GPU usage.
+
+    C Name: gpu
+    C Location: photoproc.h
+    C Parent: tstat
+    """
+
+    _fields_ = [
+        ("state", ctypes.c_char),
+        ("bfuture", ctypes.c_char * 3),
+        ("nrgpus", ctypes.c_short),
+        ("gpulist", ctypes.c_int32),
+        ("gpubusy", ctypes.c_int),
+        ("membusy", ctypes.c_int),
+        ("timems", count_t),
+        ("memnow", count_t),
+        ("memcum", count_t),
+        ("sample", count_t),
+        ("cfuture", count_t * 3),
+    ]
 
 
 class TStat(ctypes.Structure):

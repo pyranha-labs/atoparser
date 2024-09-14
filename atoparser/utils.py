@@ -35,6 +35,7 @@ from atoparser.structs import atop_2_7
 from atoparser.structs import atop_2_8
 from atoparser.structs import atop_2_9
 from atoparser.structs import atop_2_10
+from atoparser.structs import atop_2_11
 
 _VERSIONS = [
     atop_1_26,
@@ -46,6 +47,7 @@ _VERSIONS = [
     atop_2_8,
     atop_2_9,
     atop_2_10,
+    atop_2_11,
 ]
 Header = Union[tuple(module.Header for module in _VERSIONS)]
 Record = Union[tuple(module.Record for module in _VERSIONS)]
@@ -91,6 +93,8 @@ def generate_statistics(
 
     try:
         header_version = header.semantic_version
+        major, minor = header_version.split(".")[:2]
+        major, minor = int(major), int(minor)
         record_cls = _RECORD_BY_VERSION.get(header_version, _RECORD_BY_VERSION[_DEFAULT_VERSION])
         sstat_cls = _SSTAT_BY_VERSION.get(header_version, _SSTAT_BY_VERSION[_DEFAULT_VERSION])
         tstat_cls = _TSTAT_BY_VERSION.get(header_version, _TSTAT_BY_VERSION[_DEFAULT_VERSION])
@@ -106,6 +110,10 @@ def generate_statistics(
                 break
             devsstat = get_sstat(raw_file, record, sstat_cls)
             devtstats = get_tstat(raw_file, record, tstat_cls)
+            if major >= 2 and minor >= 11:
+                # Skip the bytes for the cstats and plists, currently unsupported.
+                raw_file.read(record.ccomplen)
+                raw_file.read(record.icomplen)
             yield record, devsstat, devtstats
     except zlib.error:
         # End of readable data reached. This is common during software restarts.
