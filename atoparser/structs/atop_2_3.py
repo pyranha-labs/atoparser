@@ -47,51 +47,6 @@ MAXNFSMOUNT = 64
 MAXDKNAM = 32
 
 
-class Header(ctypes.Structure, HeaderMixin):
-    """Top level struct to describe information about the system running Atop and the log file itself.
-
-    C Name: rawheader
-    C Location: rawlog.c
-    """
-
-    _fields_ = [
-        ("magic", ctypes.c_uint),
-        ("aversion", ctypes.c_ushort),
-        ("future1", ctypes.c_ushort),
-        ("future2", ctypes.c_ushort),
-        ("rawheadlen", ctypes.c_ushort),
-        ("rawreclen", ctypes.c_ushort),
-        ("hertz", ctypes.c_ushort),
-        ("sfuture", ctypes.c_ushort * 6),
-        ("sstatlen", ctypes.c_uint),
-        ("tstatlen", ctypes.c_uint),
-        ("utsname", UTSName),
-        ("cfuture", ctypes.c_char * 8),
-        ("pagesize", ctypes.c_uint),
-        ("supportflags", ctypes.c_int),
-        ("osrel", ctypes.c_int),
-        ("osvers", ctypes.c_int),
-        ("ossub", ctypes.c_int),
-        ("ifuture", ctypes.c_int * 6),
-    ]
-    supported_version = "2.3"
-
-    def check_compatibility(self) -> None:
-        """Verify if the loaded values are compatible with this header version.
-
-        Raises:
-            ValueError if not compatible.
-        """
-        sizes = [
-            (self.rawheadlen, ctypes.sizeof(Header)),
-            (self.rawreclen, ctypes.sizeof(Record)),
-            (self.sstatlen, ctypes.sizeof(SStat)),
-            (self.tstatlen, ctypes.sizeof(TStat)),
-        ]
-        if any(size[0] != size[1] for size in sizes):
-            raise ValueError(f"File has incompatible Atop format. Struct length evaluations (found, expected): {sizes}")
-
-
 class Record(ctypes.Structure):
     """Top level struct to describe basic process information, and the following SStat and TStat structs.
 
@@ -591,3 +546,36 @@ class TStat(ctypes.Structure):
         ("mem", MEM),
         ("net", NET),
     ]
+
+
+class Header(ctypes.Structure, HeaderMixin):
+    """Top level struct to describe information about the system running Atop and the log file itself.
+
+    C Name: rawheader
+    C Location: rawlog.c
+    """
+
+    _fields_ = [
+        ("magic", ctypes.c_uint),
+        ("aversion", ctypes.c_ushort),
+        ("future1", ctypes.c_ushort),
+        ("future2", ctypes.c_ushort),
+        ("rawheadlen", ctypes.c_ushort),
+        ("rawreclen", ctypes.c_ushort),
+        ("hertz", ctypes.c_ushort),
+        ("sfuture", ctypes.c_ushort * 6),
+        ("sstatlen", ctypes.c_uint),
+        ("tstatlen", ctypes.c_uint),
+        ("utsname", UTSName),
+        ("cfuture", ctypes.c_char * 8),
+        ("pagesize", ctypes.c_uint),
+        ("supportflags", ctypes.c_int),
+        ("osrel", ctypes.c_int),
+        ("osvers", ctypes.c_int),
+        ("ossub", ctypes.c_int),
+        ("ifuture", ctypes.c_int * 6),
+    ]
+    supported_version = "2.3"
+    Record = Record
+    SStat = SStat
+    TStat = TStat

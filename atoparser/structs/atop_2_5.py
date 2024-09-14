@@ -13,8 +13,6 @@ See https://github.com/Atoptool/atop for more information and full details about
 Using schemas and structs from Atop 2.5.0.
 """
 
-import ctypes
-
 from atoparser.structs import atop_1_26
 from atoparser.structs import atop_2_3
 from atoparser.structs import atop_2_4
@@ -49,23 +47,6 @@ MAXGPUBUS = 12
 MAXGPUTYPE = 12
 MAXDKNAM = 32
 MAXIBNAME = 12
-
-
-class Header(atop_2_3.Header):
-    """Top level struct to describe information about the system running Atop and the log file itself."""
-
-    supported_version = "2.5"
-
-    def check_compatibility(self) -> None:
-        """Verify if the loaded values are compatible with this header version."""
-        sizes = [
-            (self.rawheadlen, ctypes.sizeof(Header)),
-            (self.rawreclen, ctypes.sizeof(Record)),
-            (self.sstatlen, ctypes.sizeof(SStat)),
-            (self.tstatlen, ctypes.sizeof(TStat)),
-        ]
-        if any(size[0] != size[1] for size in sizes):
-            raise ValueError(f"File has incompatible Atop format. Struct length evaluations (found, expected): {sizes}")
 
 
 Record = atop_2_3.Record
@@ -183,3 +164,12 @@ GPU = atop_2_4.GPU
 
 
 TStat = atop_2_4.TStat
+
+
+class Header(atop_2_3.Header):
+    """Top level struct to describe information about the system running Atop and the log file itself."""
+
+    supported_version = "2.5"
+    Record = Record
+    SStat = SStat
+    TStat = TStat

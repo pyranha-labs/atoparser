@@ -34,22 +34,53 @@ class HeaderMixin:
 
     supported_version = None
 
+    def check_compatibility(self) -> None:
+        """Verify if the loaded values are compatible with this header version.
+
+        Raises:
+            ValueError if not compatible.
+        """
+        sizes = [
+            ("Header", self.rawheadlen, ctypes.sizeof(self.__class__)),
+            ("Record", self.rawreclen, ctypes.sizeof(self.Record)),
+            ("SStat", self.sstatlen, ctypes.sizeof(self.SStat)),
+        ]
+        if self.major_version >= 2 and self.minor_version >= 3:
+            sizes.append(("TStat", self.tstatlen, ctypes.sizeof(self.TStat)))
+        else:
+            sizes.append(("PStat", self.pstatlen, ctypes.sizeof(self.PStat)))
+        if any(size[1] != size[2] for size in sizes):
+            raise ValueError(
+                f"File has incompatible Atop format. Struct length evaluations (type, found, expected): {sizes}"
+            )
+
+    @property
+    def major_version(self) -> int:
+        """The major version from the semantic version."""
+        self.semantic_version  # Call the primary property to ensure population. pylint: disable=pointless-statement
+        return self._major_version
+
+    @property
+    def minor_version(self) -> int:
+        """The minor version from the semantic version."""
+        self.semantic_version  # Call the primary property to ensure population. pylint: disable=pointless-statement
+        return self._minor_version
+
     @property
     def semantic_version(self) -> str:
-        """Convert the raw version into a semantic version.
+        """The semantic version as major.minor.
 
-        Returns:
-            The final major.minor version from the header aversion.
-                Atop releases have "maintenance" versions, but they do not impact the header or file structure.
-                i.e., 2.3.1 is the same as 2.3.
+        Atop releases have "maintenance" versions, but they do not impact the header or file structure.
+        i.e., 2.3.1 is the same as 2.3.
         """
         # Use a general getattr() call to ensure the instance can always set the attribute even on first call.
         # C structs have various ways of creating instances, so __init__ is not always called to set up attributes.
-        if not getattr(self, "_version", None):
-            major = (self.aversion >> 8) & 0x7F
-            minor = self.aversion & 0xFF
-            self._version = f"{major}.{minor}"  # pylint: disable=attribute-defined-outside-init
-        return self._version
+        if not getattr(self, "_semantic_version", None):
+            # pylint: disable=attribute-defined-outside-init
+            self._major_version = (self.aversion >> 8) & 0x7F
+            self._minor_version = self.aversion & 0xFF
+            self._semantic_version = f"{self._major_version}.{self._minor_version}"
+        return self._semantic_version
 
 
 class UTSName(ctypes.Structure):
