@@ -61,23 +61,6 @@ MAXDKNAM = 32
 MAXIBNAME = 12
 
 
-class Header(atop_2_8.Header):
-    """Top level struct to describe information about the system running Atop and the log file itself."""
-
-    supported_version = "2.10"
-
-    def check_compatibility(self) -> None:
-        """Verify if the loaded values are compatible with this header version."""
-        sizes = [
-            (self.rawheadlen, ctypes.sizeof(Header)),
-            (self.rawreclen, ctypes.sizeof(Record)),
-            (self.sstatlen, ctypes.sizeof(SStat)),
-            (self.tstatlen, ctypes.sizeof(TStat)),
-        ]
-        if any(size[0] != size[1] for size in sizes):
-            raise ValueError(f"File has incompatible Atop format. Struct length evaluations (found, expected): {sizes}")
-
-
 class Record(ctypes.Structure):
     """Top level struct to describe basic process information, and the following SStat and TStat structs.
 
@@ -466,3 +449,12 @@ class TStat(ctypes.Structure):
         ("net", NET),
         ("gpu", GPU),
     ]
+
+
+class Header(atop_2_8.Header):
+    """Top level struct to describe information about the system running Atop and the log file itself."""
+
+    supported_version = "2.10"
+    Record = Record
+    SStat = SStat
+    TStat = TStat
