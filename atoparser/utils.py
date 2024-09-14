@@ -5,18 +5,23 @@ The basic layout of an Atop log file can be described as the following:
     - Single instance at the beginning of the file.
     - Contains information about all the following raw records.
 2. Raw Record:
-    - Single instance repeated in a loop with an SStat and TStat array until end of file.
+    - Single instance repeated in a loop with remaining stats until end of file.
     - Contains information about the *Stat structs that immediately follow it.
 3. Raw SStat:
-    - Single instance repeated in a loop with a Record and TStats array until end of file.
+    - Single instance repeated in a loop with remaining stats until end of file.
     - Always found directly after a Record.
     - Always found directly before a TStat array.
     - Contains statistics about overall system activity.
 4. Raw TStats:
-    - Array of TStat instances repeated in a loop with a Record and SStat until end of file.
+    - Array of TStat instances repeated in a loop with remaining stats until end of file.
     - Always found directly after a SStat.
-    - Always found directly before the next Record if not the end of file.
+    - Always found directly before the next Record (if <= 2.11) or before a CStat array (if 2.11+).
     - Contains statistics about every task/process on the system.
+4. Raw CStats/CGroups:
+    - Array of CStat/CGroup instances repeated in a loop with other stats until end of file.
+    - Always found directly after a TStat.
+    - Always found directly before the next Record if not the end of file.
+    - Contains statistics about every CGroup on the system.
 """
 
 from __future__ import annotations
@@ -36,6 +41,7 @@ from atoparser.structs import atop_2_8
 from atoparser.structs import atop_2_9
 from atoparser.structs import atop_2_10
 from atoparser.structs import atop_2_11
+from atoparser.structs.shared import pid_t
 
 _VERSIONS = [
     atop_1_26,
@@ -49,17 +55,18 @@ _VERSIONS = [
     atop_2_10,
     atop_2_11,
 ]
-Header = Union[tuple(module.Header for module in _VERSIONS)]
-Record = Union[tuple(module.Record for module in _VERSIONS)]
-SStat = Union[tuple(module.SStat for module in _VERSIONS)]
-TStat = Union[tuple(module.TStat for module in _VERSIONS)]  # pylint: disable=invalid-name
-_HEADER_BY_VERSION: dict[str, type[Header]] = {module.Header.supported_version: module.Header for module in _VERSIONS}
-_RECORD_BY_VERSION: dict[str, type[Record]] = {module.Header.supported_version: module.Record for module in _VERSIONS}
-_SSTAT_BY_VERSION: dict[str, type[SStat]] = {module.Header.supported_version: module.SStat for module in _VERSIONS}
-_TSTAT_BY_VERSION: dict[str, type[TStat]] = {module.Header.supported_version: module.TStat for module in _VERSIONS}
-
+_CSTAT_VERSIONS = _VERSIONS[9:]
 # Fallback to latest if there is no custom class provided to attempt backwards compatibility.
-_DEFAULT_VERSION = list(_HEADER_BY_VERSION.keys())[-1]
+_DEFAULT_VERSION = _VERSIONS[-1].Header.supported_version
+_HEADER_BY_VERSION: dict[str, type[Header]] = {module.Header.supported_version: module.Header for module in _VERSIONS}
+
+Header = Union[tuple(header for header in _HEADER_BY_VERSION.values())]
+Record = Union[tuple(header.Record for header in _HEADER_BY_VERSION.values())]
+SStat = Union[tuple(header.SStat for header in _HEADER_BY_VERSION.values())]
+TStat = Union[tuple(header.TStat for header in _HEADER_BY_VERSION.values())]  # pylint: disable=invalid-name
+CStat = Union[tuple(header.CStat for header in _HEADER_BY_VERSION.values())]
+CGChainer = Union[tuple(header.CGChainer for header in _HEADER_BY_VERSION.values())]
+
 
 # Default Atop sample is once per minute, but it can be manually increased/decreased.
 # Additionally, logs may not rollover as expected, combining multiple hours into 1 log.
@@ -75,7 +82,7 @@ def generate_statistics(
     header: Header = None,
     raise_on_truncation: bool = True,
     max_samples: int = MAX_SAMPLES_PER_FILE,
-) -> tuple[Record, SStat, list[TStat]]:
+) -> tuple[Record, SStat, list[TStat], list[CGChainer]]:
     """Read statistics groups from an open Atop log file.
 
     Args:
@@ -85,7 +92,7 @@ def generate_statistics(
         max_samples: Maximum number of samples read from a file.
 
     Yields:
-        The next record, devsstat, and devtstat statistic groups after reading in raw bytes to objects.
+        The next record, sstat, tstat list, and cstat list statistic groups after reading in raw bytes to objects.
     """
     if header is None:
         # If a header was not provided, read up to the proper length and discard to ensure the correct starting offset.
@@ -95,26 +102,24 @@ def generate_statistics(
         header_version = header.semantic_version
         major, minor = header_version.split(".")[:2]
         major, minor = int(major), int(minor)
-        record_cls = _RECORD_BY_VERSION.get(header_version, _RECORD_BY_VERSION[_DEFAULT_VERSION])
-        sstat_cls = _SSTAT_BY_VERSION.get(header_version, _SSTAT_BY_VERSION[_DEFAULT_VERSION])
-        tstat_cls = _TSTAT_BY_VERSION.get(header_version, _TSTAT_BY_VERSION[_DEFAULT_VERSION])
         for _ in range(max_samples):
             # Read the repeating structured information until the end of the file.
             # Atop log files consist of the following after the header, repeated until the end:
             # 1. Record: Metadata about statistics.
             # 2. SStats: System statistics.
             # 3. TStats: Task/process statistics.
-            record = get_record(raw_file, record_cls)
+            # 4. CGChain/CStats: CGroup statistics.
+            record = get_record(raw_file, header)
             if record.scomplen <= 0:
                 # Natural end-of-file, no further bytes were found to populate another record.
                 break
-            devsstat = get_sstat(raw_file, record, sstat_cls)
-            devtstats = get_tstat(raw_file, record, tstat_cls)
+            sstat = get_sstat(raw_file, header, record)
+            tstats = get_tstat(raw_file, header, record)
             if major >= 2 and minor >= 11:
-                # Skip the bytes for the cstats and plists, currently unsupported.
-                raw_file.read(record.ccomplen)
-                raw_file.read(record.icomplen)
-            yield record, devsstat, devtstats
+                cgroups = get_cstat(raw_file, header, record)
+            else:
+                cgroups = []
+            yield record, sstat, tstats, cgroups
     except zlib.error:
         # End of readable data reached. This is common during software restarts.
         # All errors after the header are squashable errors, since that means the file is valid, but was not closed.
@@ -156,12 +161,15 @@ def get_header(raw_file: io.BytesIO, check_compatibility: bool = True) -> Header
     return header
 
 
-def get_record(raw_file: io.BytesIO, record_cls: type[Record]) -> Record:
+def get_record(
+    raw_file: io.BytesIO,
+    header: Header,
+) -> Record:
     """Get the next raw record from an open Atop file.
 
     Args:
         raw_file: An open Atop file capable of reading as bytes.
-        record_cls: Record struct class to read the raw bytes into.
+        header: The header from the file containing metadata about records to read.
 
     Returns:
         A single record representing the data before an SStat struct.
@@ -169,22 +177,22 @@ def get_record(raw_file: io.BytesIO, record_cls: type[Record]) -> Record:
     Raises:
         ValueError if there are not enough bytes to read a single record.
     """
-    record = record_cls()
+    record = header.Record()
     raw_file.readinto(record)
     return record
 
 
 def get_sstat(
     raw_file: io.BytesIO,
-    raw_record: Record,
-    sstat_cls: type[SStat],
+    header: Header,
+    record: Record,
 ) -> SStat:
     """Get the next raw sstat from an open Atop file.
 
     Args:
         raw_file: An open Atop file capable of reading as bytes.
-        raw_record: The preceding record containing metadata about the SStat to read.
-        sstat_cls: SStat struct class to read the raw bytes into.
+        header: The header from the file containing metadata about records to read.
+        record: The preceding record containing metadata about the SStat to read.
 
     Returns:
         A single struct representing the data after a raw record, but before an array of TStat structs.
@@ -194,23 +202,23 @@ def get_sstat(
     """
     # Read the requested length instead of the length of the struct.
     # The data is compressed and must be decompressed before it will fill the struct.
-    buffer = raw_file.read(raw_record.scomplen)
+    buffer = raw_file.read(record.scomplen)
     decompressed = zlib.decompress(buffer)
-    sstat = sstat_cls.from_buffer_copy(decompressed)
+    sstat = header.SStat.from_buffer_copy(decompressed)
     return sstat
 
 
 def get_tstat(
     raw_file: io.BytesIO,
+    header: Header,
     record: Record,
-    tstat_cls: type[TStat],
 ) -> list[TStat]:
     """Get the next raw tstat array from an open Atop file.
 
     Args:
         raw_file: An open Atop file capable of reading as bytes.
+        header: The header from the file containing metadata about records to read.
         record: The preceding record containing metadata about the TStats to read.
-        tstat_cls: TStat struct class to read the raw bytes into.
 
     Returns:
         All TStat structs after a raw SStat, but before the next raw record.
@@ -223,19 +231,64 @@ def get_tstat(
     buffer = raw_file.read(record.pcomplen)
     decompressed = zlib.decompress(buffer)
 
-    # The final decompressed data is an array of structs, with the length determined by the raw record.
-    uncompressed_len = ctypes.sizeof(tstat_cls)
     record_count = record.nlist if isinstance(record, atop_1_26.Record) else record.ndeviat
+    tstatlen = header.tstatlen if header.major_version >= 2 and header.minor_version >= 3 else header.pstatlen
     tstats = []
     for index in range(record_count):
         # Reconstruct one TStat struct for every possible byte chunk, incrementing the offset each pass. For example:
         # First pass: 0 - 21650
         # Second pass: 21651 - 43300
-        start = index * uncompressed_len
-        end = uncompressed_len * (index + 1)
-        tstat = tstat_cls.from_buffer_copy(decompressed[start:end])
+        tstat = header.TStat.from_buffer_copy(decompressed[index * tstatlen : tstatlen * (index + 1)])
         tstats.append(tstat)
     return tstats
+
+
+def get_cstat(
+    raw_file: io.BytesIO,
+    header: Header,
+    record: Record,
+) -> list[CGChainer]:
+    """Get the next raw cstat array from an open Atop file.
+
+    Args:
+        raw_file: An open Atop file capable of reading as bytes.
+        header: The header from the file containing metadata about records to read.
+        record: The preceding record containing metadata about the CStats to read.
+
+    Returns:
+        All CGroup CStat structs and PID lists after a raw TStat, but before the next raw record.
+
+    Raises:
+        ValueError if there are not enough bytes to read a stat array.
+    """
+    # Read the requested length instead of the length of the struct.
+    # The data is compressed and must be decompressed before it will fill the final list of structs.
+    buffer_cstats = raw_file.read(record.ccomplen)
+    decompressed_cstats = zlib.decompress(buffer_cstats)
+    buffer_pidlist = raw_file.read(record.icomplen)
+    decompressed_pidlist = zlib.decompress(buffer_pidlist)
+
+    cgroups = []
+    cstat_start = 0
+    cstatlen = header.cstatlen
+    pidlist_start = 0
+    for _ in range(record.ncgroups):
+        # Reconstruct one CStat struct and pidlist for every possible byte chunk, incrementing the offset each pass.
+        # For example:
+        # First pass: 0 - 21650
+        # Second pass: 21651 - 43300
+        # N.B. The variable length cgname is currently unsupported. In order to properly skip the remaining bytes,
+        # Use the final structlen from the nested gen struct to update the starting point.
+        cstat = header.CStat.from_buffer_copy(decompressed_cstats[cstat_start : cstat_start + cstatlen])
+        cstat_start += cstat.gen.structlen
+
+        pid_array = pid_t * cstat.gen.nprocs
+        pid_array_size = ctypes.sizeof(pid_array)
+        pidlist = pid_array.from_buffer_copy(decompressed_pidlist[pidlist_start : pidlist_start + pid_array_size])
+        pidlist_start += pid_array_size
+
+        cgroups.append(header.CGChainer(cstat, pidlist))
+    return cgroups
 
 
 def struct_to_dict(struct: ctypes.Structure) -> dict:
@@ -262,8 +315,11 @@ def struct_to_dict(struct: ctypes.Structure) -> dict:
                 limiter = limiters.get(field_name)
                 if limiter:
                     field_data = field_data[: getattr(struct, limiter)]
-                for subdata in field_data[: getattr(struct, struct.fields_limiters.get(field_name))]:
-                    struct_dict[field_name].append(struct_to_dict(subdata))
+                for sub_data in field_data:
+                    if isinstance(sub_data, ctypes.Structure):
+                        struct_dict[field_name].append(struct_to_dict(sub_data))
+                    else:
+                        struct_dict[field_name].append(sub_data)
             elif isinstance(field_data, bytes):
                 struct_dict[field_name] = field_data.decode(errors="ignore")
             else:

@@ -84,7 +84,7 @@ import atoparser
 
 with open(file, 'rb') as raw_file:
     header = atoparser.get_header(raw_file)
-    for record, sstat, tstat in atoparser.generate_statistics(raw_file, header):
+    for record, sstat, tstats, cgroups in atoparser.generate_statistics(raw_file, header):
         total_cycles = record.interval * sstat.cpu.nrcpu * header.hertz
         usage = 1 - sstat.cpu.all.itime / total_cycles
         print(f'CPU usage was {usage:.02%}')

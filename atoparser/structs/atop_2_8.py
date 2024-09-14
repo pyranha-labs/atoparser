@@ -612,3 +612,5 @@ class Header(ctypes.Structure, HeaderMixin):
     Record = Record
     SStat = SStat
     TStat = TStat
+    CStat = None
+    CGChainer = None

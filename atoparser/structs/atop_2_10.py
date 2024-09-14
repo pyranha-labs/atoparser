@@ -458,3 +458,5 @@ class Header(atop_2_8.Header):
     Record = Record
     SStat = SStat
     TStat = TStat
+    CStat = None
+    CGChainer = None
