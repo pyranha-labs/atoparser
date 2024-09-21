@@ -636,7 +636,7 @@ class PStat(ctypes.Structure):
     ]
 
 
-# Add TStat aliases for forwards compatibility. TStat and PStat are the same base stats, but renamed in later versions.
+# Add TStat alias for forwards compatibility. TStat and PStat are the same base stats, but renamed in later versions.
 TStat = PStat
 
 
@@ -671,3 +671,7 @@ class Header(ctypes.Structure, HeaderMixin):
     Record = Record
     SStat = SStat
     PStat = PStat
+    # Add TStat alias for forwards compatibility. TStat and PStat are the same base stats, but renamed in later versions.
+    TStat = PStat
+    CStat = None
+    CGChainer = None

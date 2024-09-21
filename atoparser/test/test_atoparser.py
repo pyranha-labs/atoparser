@@ -20,9 +20,9 @@ TEST_FILE_DIR = os.path.join(os.path.dirname(__file__), "files")
 # Store raw byes from an Atop file which can be used to simulate calling struct readers while raising errors.
 with gzip.open(os.path.join(TEST_FILE_DIR, "atop_1_26.log.gz")) as raw_file:
     HEADER_BYTES = bytearray(atoparser.get_header(raw_file))
-    record = atoparser.get_record(raw_file, atop_1_26_structs.Record)
-    RECORD_BYTES = bytearray(record)
-    SSTAT_BYTES = raw_file.read(record.scomplen)
+    _record = atoparser.get_record(raw_file, atop_1_26_structs.Header.from_buffer(HEADER_BYTES))
+    RECORD_BYTES = bytearray(_record)
+    SSTAT_BYTES = raw_file.read(_record.scomplen)
 
 TEST_CASES = {
     "file_header": {
@@ -1117,6 +1117,30 @@ TEST_CASES = {
             },
         },
     },
+    "file_cstat": {
+        "2.10": {
+            "args": [
+                os.path.join(TEST_FILE_DIR, "atop_2_10.log.gz"),
+            ],
+            "returns": None,
+        },
+        "2.11": {
+            "args": [
+                os.path.join(TEST_FILE_DIR, "atop_2_11.log.gz"),
+            ],
+            "returns": {
+                "cstat": {
+                    "gen": {
+                        "structlen": 440,
+                        "nprocs": 2,
+                    }
+                },
+                "proclist": [1, 2979],
+                "sample_index": 4,
+                "cstat_index": 0,
+            },
+        },
+    },
     "get_header": {
         "Valid": {
             "args": [
@@ -1162,7 +1186,7 @@ TEST_CASES = {
         "Valid": {
             "args": [
                 io.BytesIO(HEADER_BYTES + RECORD_BYTES),
-                atop_1_26_structs.Record,
+                atop_1_26_structs.Header.from_buffer(HEADER_BYTES),
             ],
             "returns": {
                 "curtime": 1705174817,
@@ -1182,7 +1206,7 @@ TEST_CASES = {
         "Truncated": {
             "args": [
                 io.BytesIO(HEADER_BYTES + RECORD_BYTES[:16]),
-                atop_1_26_structs.Record,
+                atop_1_26_structs.Header.from_buffer(HEADER_BYTES),
             ],
             "returns": {
                 "curtime": 1705174817,
@@ -1204,7 +1228,7 @@ TEST_CASES = {
         "Valid": {
             "args": [
                 io.BytesIO(HEADER_BYTES + RECORD_BYTES + SSTAT_BYTES),
-                atop_1_26_structs.SStat,
+                atop_1_26_structs.Header.from_buffer(HEADER_BYTES),
             ],
             "returns": {
                 "cpu": {
@@ -1228,7 +1252,7 @@ TEST_CASES = {
         "Truncated": {
             "args": [
                 io.BytesIO(HEADER_BYTES + RECORD_BYTES + SSTAT_BYTES[:16]),
-                atop_1_26_structs.SStat,
+                atop_1_26_structs.Header.from_buffer(HEADER_BYTES),
             ],
             "raises": zlib.error,
         },
@@ -1447,12 +1471,13 @@ def _read_log(log: str) -> list[dict]:
     opener = open if not log.endswith(".gz") else gzip.open
     with opener(log, "rb") as raw_file:
         header = atoparser.get_header(raw_file)
-        for index, (record, sstat, tstat) in enumerate(atoparser.generate_statistics(raw_file, header)):
+        for index, (record, sstat, tstats, cgroups) in enumerate(atoparser.generate_statistics(raw_file, header)):
             converted = {
                 "header": atoparser.struct_to_dict(header),
                 "record": atoparser.struct_to_dict(record),
                 "sstat": atoparser.struct_to_dict(sstat),
-                "tstat": [atoparser.struct_to_dict(stat) for stat in tstat],
+                "tstat": [atoparser.struct_to_dict(stat) for stat in tstats],
+                "cgroup": [atoparser.struct_to_dict(stat) for stat in cgroups],
             }
             converted["header"]["semantic_version"] = header.semantic_version
             converted["record"]["record_index"] = index
@@ -1467,7 +1492,7 @@ def _read_parseables(log: str, parseables: list[str], module: ModuleType) -> lis
     with opener(log, "rb") as raw_file:
         header = atoparser.get_header(raw_file)
         parsers = {parseable: getattr(module, f"parse_{parseable}") for parseable in parseables}
-        for record, sstat, tstat in atoparser.generate_statistics(raw_file, header, raise_on_truncation=False):
+        for record, sstat, tstat, cstat in atoparser.generate_statistics(raw_file, header, raise_on_truncation=False):
             sample = {}
             for parseable in parseables:
                 for result in parsers[parseable](header, record, sstat, tstat):
@@ -1516,6 +1541,24 @@ def _tstat_to_simple_dict(tstat: dict | atoparser.TStat) -> dict:
         },
     }
     return simple_tstat
+
+
+def _cgchain_to_simple_dict(cgchainer: dict | atoparser.CGChainer) -> dict:
+    """Convert cgchain structs into simplified dictionaries for comparison operations."""
+    # Only pull enough values prove bytes were read into structs successfully in the correct order,
+    # without overwhelming test output.
+    if isinstance(cgchainer, atoparser.CGChainer):
+        cgchainer = atoparser.struct_to_dict(cgchainer)
+    simple_cgchainer = {
+        "cstat": {
+            "gen": {
+                "structlen": cgchainer["cstat"]["gen"]["structlen"],
+                "nprocs": cgchainer["cstat"]["gen"]["nprocs"],
+            }
+        },
+        "proclist": cgchainer["proclist"],
+    }
+    return simple_cgchainer
 
 
 @pytest.mark.parametrize_test_case("test_case", TEST_CASES["file_header"])
@@ -1575,6 +1618,24 @@ def test_file_tstat(test_case: dict, function_tester: Callable) -> None:
     function_tester(test_case, _get_struct)
 
 
+@pytest.mark.parametrize_test_case("test_case", TEST_CASES["file_cstat"])
+def test_file_cstat(test_case: dict, function_tester: Callable) -> None:
+    """Read a file and ensure the values in the cstats match expectations."""
+
+    def _get_struct(log: str) -> dict | None:
+        """Read a log and return the cstat from the last sample to ensure the entire file processed correctly."""
+        sample = _read_log(log)[-1]
+        cstats = sample["cgroup"]
+        if not cstats:
+            return None
+        dict_cstat = _cgchain_to_simple_dict(cstats[-1])
+        dict_cstat["sample_index"] = sample["record"]["record_index"]
+        dict_cstat["cstat_index"] = len(cstats) - 1
+        return dict_cstat
+
+    function_tester(test_case, _get_struct)
+
+
 @pytest.mark.parametrize_test_case("test_case", TEST_CASES["get_header"])
 def test_get_header(test_case: dict, function_tester: Callable) -> None:
     """Unit tests for get_header."""
@@ -1613,19 +1674,19 @@ def test_get_record(test_case: dict, function_tester: Callable) -> None:
 def test_get_sstat(test_case: dict, function_tester: Callable) -> None:
     """Unit tests for get_sstat."""
 
-    def _get_sstat(raw_file: io.BytesIO, sstat_cls: atoparser.SStat) -> dict:
+    def _get_sstat(raw_file: io.BytesIO, header: atoparser.Header) -> dict:
         """Convert raw byte sample into dict for tests."""
         return json.loads(
             json.dumps(
-                _sstat_to_simple_dict(atoparser.get_sstat(raw_file, record, sstat_cls)),
+                _sstat_to_simple_dict(atoparser.get_sstat(raw_file, header, record)),
                 sort_keys=True,
             )
         )
 
     # Read the header and record to ensure the offset is correct prior to reading the stats.
     mock_file = test_case["args"][0]
-    atoparser.get_header(mock_file)
-    record = atoparser.get_record(mock_file, atop_1_26_structs.Record)
+    header = atoparser.get_header(mock_file)
+    record = atoparser.get_record(mock_file, header)
     function_tester(test_case, _get_sstat)
 
 

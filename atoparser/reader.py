@@ -48,6 +48,11 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         help="Include TStats/PStats in output. Very verbose.",
     )
+    parser.add_argument(
+        "--cstats",
+        action="store_true",
+        help="Include CGroup/CStats in output. Only available with Atop 2.11+ logs. Verbose.",
+    )
     args = parser.parse_args()
     return args
 
@@ -70,10 +75,14 @@ def main() -> None:
                 )
                 continue
             parsers = PARSEABLE_MAP.get(header.semantic_version, PARSEABLE_MAP["1.26"])
-            for record, sstat, tstat in atoparser.generate_statistics(raw_file, header, raise_on_truncation=False):
+            for record, sstat, tstats, cgroups in atoparser.generate_statistics(
+                raw_file,
+                header,
+                raise_on_truncation=False,
+            ):
                 if args.parseables:
                     for parseable in args.parseables:
-                        for sample in parsers[parseable](header, record, sstat, tstat):
+                        for sample in parsers[parseable](header, record, sstat, tstats):
                             sample["parseable"] = parseable
                             samples.append(sample)
                 else:
@@ -83,7 +92,9 @@ def main() -> None:
                         "sstat": atoparser.struct_to_dict(sstat),
                     }
                     if args.tstats:
-                        converted["tstat"] = [atoparser.struct_to_dict(stat) for stat in tstat]
+                        converted["tstat"] = [atoparser.struct_to_dict(stat) for stat in tstats]
+                    if args.cstats:
+                        converted["cgroup"] = [atoparser.struct_to_dict(stat) for stat in cgroups]
                     samples.append(converted)
         print(json.dumps(samples, indent=2 if args.pretty_print else None))
 

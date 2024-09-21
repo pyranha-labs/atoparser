@@ -24,6 +24,7 @@ from atoparser.structs import atop_2_10
 from atoparser.structs.shared import HeaderMixin
 from atoparser.structs.shared import UTSName
 from atoparser.structs.shared import count_t
+from atoparser.structs.shared import pid_t
 from atoparser.structs.shared import time_t
 
 # Disable the following pylint warnings to allow the variables and classes to match the style from the C.
@@ -526,6 +527,147 @@ class TStat(ctypes.Structure):
     ]
 
 
+class CGGen(ctypes.Structure):
+    """Embedded struct to describe a single cgroup's general information.
+
+    C Name: cggen
+    C Location: cgroups.h
+    C Parent: cstat
+    """
+
+    _fields_ = [
+        ("structlen", ctypes.c_int),
+        ("sequence", ctypes.c_int),
+        ("parentseq", ctypes.c_int),
+        ("depth", ctypes.c_int),
+        ("nprocs", ctypes.c_int),
+        ("procsbelow", ctypes.c_int),
+        ("namelen", ctypes.c_int),
+        ("fullnamelen", ctypes.c_int),
+        ("ifuture", ctypes.c_int * 4),
+        ("namehash", ctypes.c_long),
+        ("lfuture", ctypes.c_long * 4),
+    ]
+
+
+class CGConf(ctypes.Structure):
+    """Embedded struct to describe a single cgroup's configuration.
+
+    C Name: cgconfg
+    C Location: cgroups.h
+    C Parent: cstat
+    """
+
+    _fields_ = [
+        ("cpuweight", ctypes.c_int),
+        ("cpumax", ctypes.c_int),
+        ("memmax", count_t),
+        ("swpmax", count_t),
+        ("dskweight", ctypes.c_int),
+        ("ifuture", ctypes.c_int * 5),
+        ("cfuture", count_t * 5),
+    ]
+
+
+class CGCPU(ctypes.Structure):
+    """Embedded struct to describe a single cgroup's processor usage.
+
+    C Name: cgcpu
+    C Location: cgroups.h
+    C Parent: cstat
+    """
+
+    _fields_ = [
+        ("utime", count_t),
+        ("stime", count_t),
+        ("somepres", count_t),
+        ("fullpres", count_t),
+        ("cfuture", count_t * 5),
+    ]
+
+
+class CGMem(ctypes.Structure):
+    """Embedded struct to describe a single cgroup's memory usage.
+
+    C Name: cgmem
+    C Location: cgroups.h
+    C Parent: cstat
+    """
+
+    _fields_ = [
+        ("current", count_t),
+        ("anon", count_t),
+        ("file", count_t),
+        ("kernel", count_t),
+        ("shmem", count_t),
+        ("somepres", count_t),
+        ("fullpres", count_t),
+        ("cfuture", count_t * 5),
+    ]
+
+
+class CGDSK(ctypes.Structure):
+    """Embedded struct to describe a single cgroup's disk usage.
+
+    C Name: cgdsk
+    C Location: cgroups.h
+    C Parent: cstat
+    """
+
+    _fields_ = [
+        ("rbytes", count_t),
+        ("wbytes", count_t),
+        ("rios", count_t),
+        ("wios", count_t),
+        ("somepres", count_t),
+        ("fullpres", count_t),
+        ("cfuture", count_t * 5),
+    ]
+
+
+class CStat(ctypes.Structure):
+    """Top level struct to describe general info and metrics per cgroup.
+
+    C Name: cstat
+    C Location: cgroups.h
+    """
+
+    _fields_ = [
+        ("gen", CGGen),
+        ("conf", CGConf),
+        ("cpu", CGCPU),
+        ("mem", CGMem),
+        ("dsk", CGDSK),
+        ("cgname", ctypes.c_char * 0),  # Variable length character array. N.B. Currently unsupported.
+    ]
+
+
+class CGChainer:
+    """Structure used to track a pidlist with a cgroup.
+
+    Due to the variable length of cgchainer values, this is a custom C struct like object, rather than a true C struct.
+    It provides the same basic attributes as a C struct to allow conversion to JSON.
+
+    C Name: cgchainer
+    C Location: cgroups.h
+    """
+
+    _fields_ = [
+        ("cstat", CStat),
+        ("proclist", ctypes.Array[pid_t]),
+    ]
+
+    def __init__(self, cstat: CStat, proclist: ctypes.Array[pid_t]) -> None:
+        """Initialize the starting CGroup chain values.
+
+        Args:
+            cstat: The primary cstat information applicable to the processes.
+            proclist: Process IDs contained in the cgroup.
+        """
+        self.cstat = cstat
+        self.proclist = proclist
+
+
 class Header(ctypes.Structure, HeaderMixin):
     """Top level struct to describe information about the system running Atop and the log file itself.
 
@@ -559,3 +701,5 @@ class Header(ctypes.Structure, HeaderMixin):
     Record = Record
     SStat = SStat
     TStat = TStat
+    CStat = CStat
+    CGChainer = CGChainer

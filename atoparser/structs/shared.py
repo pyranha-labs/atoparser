@@ -20,7 +20,6 @@ time_t = ctypes.c_long
 count_t = ctypes.c_longlong
 
 # Definitions from sys/types.h
-c_int32_t = ctypes.c_int32
 off_t = ctypes.c_long
 pid_t = ctypes.c_int
 
@@ -32,7 +31,12 @@ class HeaderMixin:
         supported_version: The version of Atop that this header is compatible with as <major.<minor>.
     """
 
-    supported_version = None
+    supported_version: str
+    Record: ctypes.Structure
+    SStat: ctypes.Structure
+    TStat: ctypes.Structure
+    CStat: ctypes.Structure
+    CGChainer: ctypes.Structure
 
     def check_compatibility(self) -> None:
         """Verify if the loaded values are compatible with this header version.
@@ -48,7 +52,9 @@ class HeaderMixin:
         if self.major_version >= 2 and self.minor_version >= 3:
             sizes.append(("TStat", self.tstatlen, ctypes.sizeof(self.TStat)))
         else:
-            sizes.append(("PStat", self.pstatlen, ctypes.sizeof(self.PStat)))
+            sizes.append(("PStat", self.pstatlen, ctypes.sizeof(self.TStat)))
+        if self.major_version >= 2 and self.minor_version >= 11:
+            sizes.append(("CStat", self.cstatlen, ctypes.sizeof(self.CStat)))
         if any(size[1] != size[2] for size in sizes):
             raise ValueError(
                 f"File has incompatible Atop format. Struct length evaluations (type, found, expected): {sizes}"

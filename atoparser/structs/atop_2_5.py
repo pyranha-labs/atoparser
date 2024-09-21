@@ -173,3 +173,5 @@ class Header(atop_2_3.Header):
     Record = Record
     SStat = SStat
     TStat = TStat
+    CStat = None
+    CGChainer = None
