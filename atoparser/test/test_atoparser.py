@@ -1693,9 +1693,9 @@ def test_get_sstat(test_case: dict, function_tester: Callable) -> None:
 @pytest.mark.parametrize_test_case("parseable", reader.PARSEABLES)
 def test_parseable_map(parseable: str) -> None:
     """Unit test to ensure every parseable has a corresponding parse_* function."""
-    assert (
-        getattr(atop_1_26_parsers, f"parse_{parseable}") is not None
-    ), f"Failed to find parse function for {parseable}"
+    assert getattr(atop_1_26_parsers, f"parse_{parseable}") is not None, (
+        f"Failed to find parse function for {parseable}"
+    )
 
 
 @pytest.mark.parametrize_test_case("test_case", TEST_CASES["parseable"])
