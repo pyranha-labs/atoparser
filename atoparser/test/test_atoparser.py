@@ -368,6 +368,36 @@ TEST_CASES = {
                 },
             },
         },
+        "2.11.1": {
+            "args": [
+                os.path.join(TEST_FILE_DIR, "atop_2_11_1.log.gz"),
+            ],
+            "returns": {
+                "aversion": 33291,
+                "cstatlen": 432,
+                "hertz": 100,
+                "magic": 4276993775,
+                "osrel": 6,
+                "ossub": 11,
+                "osvers": 5,
+                "pagesize": 4096,
+                "pidwidth": 5,
+                "rawheadlen": 480,
+                "rawreclen": 96,
+                "semantic_version": "2.11",
+                "sstatlen": 1064016,
+                "supportflags": 309,
+                "tstatlen": 968,
+                "utsname": {
+                    "domain": "(none)",
+                    "machine": "x86_64",
+                    "nodename": "fires-of-mount-doom1",
+                    "release": "6.5.11-linuxkit",
+                    "sysname": "Linux",
+                    "version": "#1 SMP PREEMPT Wed Dec  6 17:08:31 UTC 2023",
+                },
+            },
+        },
     },
     "file_record": {
         "1.26": {
@@ -668,6 +698,35 @@ TEST_CASES = {
                 "totzomb": 0,
             },
         },
+        "2.11.1": {
+            "args": [
+                os.path.join(TEST_FILE_DIR, "atop_2_11_1.log.gz"),
+            ],
+            "returns": {
+                "ccomplen": 63,
+                "coriglen": 440,
+                "curtime": 1758397562,
+                "flags": 288,
+                "icomplen": 16,
+                "interval": 1,
+                "nactproc": 1,
+                "ncgpids": 2,
+                "ncgroups": 1,
+                "ndeviat": 6,
+                "nexit": 0,
+                "noverflow": 0,
+                "ntask": 6,
+                "pcomplen": 341,
+                "record_index": 4,
+                "scomplen": 1371,
+                "totidle": 0,
+                "totproc": 2,
+                "totrun": 1,
+                "totslpi": 3,
+                "totslpu": 0,
+                "totzomb": 0,
+            },
+        },
     },
     "file_sstat": {
         "1.26": {
@@ -958,6 +1017,30 @@ TEST_CASES = {
                 "sample_index": 4,
             },
         },
+        "2.11.1": {
+            "args": [
+                os.path.join(TEST_FILE_DIR, "atop_2_11_1.log.gz"),
+            ],
+            "returns": {
+                "cpu": {
+                    "nrcpu": 12,
+                    "lavg1": 0.8799999952316284,
+                },
+                "mem": {
+                    "physmem": 2008626,
+                    "freemem": 1565597,
+                },
+                "intf": {
+                    "nrintf": 4,
+                    "intf": [{"name": "lo"}],
+                },
+                "dsk": {
+                    "ndsk": 3,
+                    "dsk": [{"name": "vda"}],
+                },
+                "sample_index": 4,
+            },
+        },
     },
     "file_tstat": {
         "1.26": {
@@ -1116,6 +1199,19 @@ TEST_CASES = {
                 "tstat_index": 5,
             },
         },
+        "2.11.1": {
+            "args": [
+                os.path.join(TEST_FILE_DIR, "atop_2_11_1.log.gz"),
+            ],
+            "returns": {
+                "gen": {
+                    "cmdline": "",
+                    "name": "atop",
+                },
+                "sample_index": 4,
+                "tstat_index": 5,
+            },
+        },
     },
     "file_cstat": {
         "2.10": {
@@ -1136,6 +1232,22 @@ TEST_CASES = {
                     }
                 },
                 "proclist": [1, 2979],
+                "sample_index": 4,
+                "cstat_index": 0,
+            },
+        },
+        "2.11.1": {
+            "args": [
+                os.path.join(TEST_FILE_DIR, "atop_2_11_1.log.gz"),
+            ],
+            "returns": {
+                "cstat": {
+                    "gen": {
+                        "structlen": 440,
+                        "nprocs": 2,
+                    }
+                },
+                "proclist": [1, 12381],
                 "sample_index": 4,
                 "cstat_index": 0,
             },
