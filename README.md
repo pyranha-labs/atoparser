@@ -40,7 +40,7 @@ For full information on the amazing performance monitoring software that creates
 ## Compatibility
 
 - Supports Python 3.10+
-- Supports Atop 1.26 and 2.3 through 2.11.
+- Supports Atop 1.26 and 2.3 through 2.12.
 
 
 ## Getting Started

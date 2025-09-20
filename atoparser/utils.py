@@ -41,6 +41,7 @@ from atoparser.structs import atop_2_8
 from atoparser.structs import atop_2_9
 from atoparser.structs import atop_2_10
 from atoparser.structs import atop_2_11
+from atoparser.structs import atop_2_12
 from atoparser.structs.shared import pid_t
 
 _VERSIONS = [
@@ -54,6 +55,7 @@ _VERSIONS = [
     atop_2_9,
     atop_2_10,
     atop_2_11,
+    atop_2_12,
 ]
 _CSTAT_VERSIONS = _VERSIONS[9:]
 # Fallback to latest if there is no custom class provided to attempt backwards compatibility.
