@@ -14,4 +14,4 @@ from atoparser.utils import get_sstat
 from atoparser.utils import get_tstat
 from atoparser.utils import struct_to_dict
 
-__version__ = "3.3.0"
+__version__ = "3.3.1"
