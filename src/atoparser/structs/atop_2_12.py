@@ -13,6 +13,8 @@ See https://github.com/Atoptool/atop for more information and full details about
 Using schemas and structs from Atop 2.12.0.
 """
 
+# order: skip-file
+
 import ctypes
 
 from atoparser.structs import atop_1_26
@@ -23,10 +25,6 @@ from atoparser.structs import atop_2_8
 from atoparser.structs import atop_2_10
 from atoparser.structs import atop_2_11
 from atoparser.structs.shared import HeaderMixin
-
-# Disable the following pylint warnings to allow the variables and classes to match the style from the C.
-# This helps with maintainability and cross-referencing.
-# pylint: disable=invalid-name,too-few-public-methods
 
 # Definitions from atop.h
 ACCTACTIVE = 0x00000001

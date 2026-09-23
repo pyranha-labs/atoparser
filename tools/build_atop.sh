@@ -26,7 +26,7 @@ fi
 # Force execution in docker to ensure reproducibility.
 if [ ! -f /.dockerenv ]; then
   echo "Running in docker."
-  docker run --rm -it --platform linux/amd64 -h fires-of-mount-doom1.theshire.co -v `pwd`:/mnt/atoparser ubuntu:jammy bash -c "/mnt/atoparser/utils/build_atop.sh --atop ${atop_version}"
+  docker run --rm -it --platform linux/amd64 -h fires-of-mount-doom1.theshire.co -v `pwd`:/mnt/atoparser ubuntu:jammy bash -c "/mnt/atoparser/tools/build_atop.sh --atop ${atop_version}"
   exit 0
 fi
 

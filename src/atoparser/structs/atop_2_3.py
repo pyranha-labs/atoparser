@@ -10,23 +10,18 @@ Struct ordering matches the C source to help with comparisons.
 If structs match exactly from a previous version, they are reused via aliasing.
 
 See https://github.com/Atoptool/atop for more information and full details about each field.
-Using schemas and structs from Atop 2.8.0.
+Using schemas and structs from Atop 2.3.0.
 """
+
+# order: skip-file
 
 import ctypes
 
 from atoparser.structs import atop_1_26
-from atoparser.structs import atop_2_3
-from atoparser.structs import atop_2_4
-from atoparser.structs import atop_2_7
 from atoparser.structs.shared import HeaderMixin
 from atoparser.structs.shared import UTSName
 from atoparser.structs.shared import count_t
 from atoparser.structs.shared import time_t
-
-# Disable the following pylint warnings to allow the variables and classes to match the style from the C.
-# This helps with maintainability and cross-referencing.
-# pylint: disable=invalid-name,too-few-public-methods
 
 # Definitions from atop.h
 ACCTACTIVE = 0x00000001
@@ -34,44 +29,33 @@ IOSTAT = 0x00000004
 NETATOP = 0x00000010
 NETATOPD = 0x00000020
 DOCKSTAT = 0x00000040
-GPUSTAT = 0x00000080
-CGROUPV2 = 0x00000100
 
 # Definitions from photoproc.h
 PNAMLEN = 15
 CMDLEN = 255
-CGRLEN = 64
 
 # Definitions from photosyst.h
 MAXCPU = 2048
 MAXDSK = 1024
-MAXNUMA = 1024
 MAXLVM = 2048
 MAXMDD = 256
 MAXINTF = 128
 MAXCONTAINER = 128
 MAXNFSMOUNT = 64
-MAXIBPORT = 32
-MAXGPU = 32
-MAXGPUBUS = 12
-MAXGPUTYPE = 12
-MAXLLC = 256
 MAXDKNAM = 32
-MAXIBNAME = 12
 
 
 class Record(ctypes.Structure):
     """Top level struct to describe basic process information, and the following SStat and TStat structs.
 
     C Name: rawrecord
-    C Location: rawlog.h
+    C Location: rawlog.c
     """
 
     _fields_ = [
         ("curtime", time_t),
         ("flags", ctypes.c_ushort),
-        ("ncgroups", ctypes.c_ushort),
-        ("sfuture", ctypes.c_ushort * 2),
+        ("sfuture", ctypes.c_ushort * 3),
         ("scomplen", ctypes.c_uint),
         ("pcomplen", ctypes.c_uint),
         ("interval", ctypes.c_uint),
@@ -85,12 +69,7 @@ class Record(ctypes.Structure):
         ("totzomb", ctypes.c_uint),
         ("nexit", ctypes.c_uint),
         ("noverflow", ctypes.c_uint),
-        ("totidle", ctypes.c_uint),
-        ("ccomplen", ctypes.c_uint),
-        ("coriglen", ctypes.c_uint),
-        ("ncgpids", ctypes.c_uint),
-        ("icomplen", ctypes.c_uint),
-        ("ifuture", ctypes.c_uint),
+        ("ifuture", ctypes.c_uint * 6),
     ]
 
 
@@ -116,8 +95,6 @@ class MemStat(ctypes.Structure):
         ("allocstall", count_t),
         ("swouts", count_t),
         ("swins", count_t),
-        ("tcpsock", count_t),
-        ("udpsock", count_t),
         ("commitlim", count_t),
         ("committed", count_t),
         ("shmem", count_t),
@@ -128,73 +105,23 @@ class MemStat(ctypes.Structure):
         ("freehugepage", count_t),
         ("hugepagesz", count_t),
         ("vmwballoon", count_t),
-        ("zfsarcsize", count_t),
-        ("swapcached", count_t),
-        ("ksmsharing", count_t),
-        ("ksmshared", count_t),
-        ("zswstored", count_t),
-        ("zswtotpool", count_t),
-        ("oomkills", count_t),
-        ("compactstall", count_t),
-        ("pgmigrate", count_t),
-        ("numamigrate", count_t),
-        ("pgouts", count_t),
-        ("pgins", count_t),
-        ("pagetables", count_t),
-        ("cfuture", count_t * 4),
+        ("cfuture", count_t * 8),
     ]
 
 
-class MemPerNUMA(ctypes.Structure):
-    """Embedded struct to describe basic memory information per NUMA node.
+FreqCnt = atop_1_26.FreqCnt
 
-    C Name: mempernuma
+
+class PerCPU(ctypes.Structure):
+    """Embedded struct to describe per processor usage information.
+
+    C Name: percpu
     C Location: photosyst.h
-    C Parent: memnuma
+    C Parent: cpustat
     """
 
     _fields_ = [
-        ("numanr", ctypes.c_int),
-        ("frag", ctypes.c_float),
-        ("totmem", count_t),
-        ("freemem", count_t),
-        ("filepage", count_t),
-        ("dirtymem", count_t),
-        ("slabmem", count_t),
-        ("slabreclaim", count_t),
-        ("active", count_t),
-        ("inactive", count_t),
-        ("shmem", count_t),
-        ("tothp", count_t),
-    ]
-
-
-class MemNUMA(ctypes.Structure):
-    """Embedded struct to describe memory usage across all NUMA nodes.
-
-    C Name: memnuma
-    C Location: photosyst.h
-    C Parent: sstat
-    """
-
-    _fields_ = [
-        ("nrnuma", count_t),
-        ("numa", MemPerNUMA * MAXNUMA),
-    ]
-    fields_limiters = {"numa": "nrnuma"}
-
-
-class CPUPerNUMA(ctypes.Structure):
-    """Embedded struct to describe basic CPU information per NUMA node.
-
-    C Name: cpupernuma
-    C Location: photosyst.h
-    C Parent: cpunuma
-    """
-
-    _fields_ = [
-        ("numanr", ctypes.c_int),
-        ("nrcpu", count_t),
+        ("cpunr", ctypes.c_int),
         ("stime", count_t),
         ("utime", count_t),
         ("ntime", count_t),
@@ -204,31 +131,32 @@ class CPUPerNUMA(ctypes.Structure):
         ("Stime", count_t),
         ("steal", count_t),
         ("guest", count_t),
+        ("freqcnt", FreqCnt),
+        ("cfuture", count_t * 4),
     ]
 
 
-class CPUNUMA(ctypes.Structure):
-    """Embedded struct to describe CPU usage across all NUMA nodes.
+class CPUStat(ctypes.Structure):
+    """Embedded struct to describe basic overall processor information.
 
-    C Name: cpunuma
+    C Name: cpustat
     C Location: photosyst.h
     C Parent: sstat
     """
 
     _fields_ = [
-        ("nrnuma", count_t),
-        ("numa", CPUPerNUMA * MAXNUMA),
+        ("nrcpu", count_t),
+        ("devint", count_t),
+        ("csw", count_t),
+        ("nprocs", count_t),
+        ("lavg1", ctypes.c_float),
+        ("lavg5", ctypes.c_float),
+        ("lavg15", ctypes.c_float),
+        ("cfuture", count_t * 4),
+        ("all", PerCPU),
+        ("cpu", PerCPU * MAXCPU),
     ]
-    fields_limiters = {"numa": "nrnuma"}
-
-
-FreqCnt = atop_1_26.FreqCnt
-
-
-PerCPU = atop_2_7.PerCPU
-
-
-CPUStat = atop_2_7.CPUStat
+    fields_limiters = {"cpu": "nrcpu"}
 
 
 class PerDSK(ctypes.Structure):
@@ -247,10 +175,7 @@ class PerDSK(ctypes.Structure):
         ("nwsect", count_t),
         ("io_ms", count_t),
         ("avque", count_t),
-        ("ndisc", count_t),
-        ("ndsect", count_t),
-        ("inflight", count_t),
-        ("cfuture", count_t * 3),
+        ("cfuture", count_t * 4),
     ]
 
 
@@ -277,125 +202,203 @@ class DSKStat(ctypes.Structure):
     }
 
 
-PerIntf = atop_2_3.PerIntf
+class PerIntf(ctypes.Structure):
+    """Embedded struct to describe per interface statistics.
 
-
-IntfStat = atop_2_3.IntfStat
-
-
-PerNFSMount = atop_2_3.PerNFSMount
-
-
-Server = atop_2_3.Server
-
-
-Client = atop_2_3.Client
-
-
-NFSMounts = atop_2_3.NFSMounts
-
-
-NFSStat = atop_2_3.NFSStat
-
-
-PSI = atop_2_4.PSI
-
-
-Pressure = atop_2_4.Pressure
-
-
-PerContainer = atop_2_3.PerContainer
-
-
-ContStat = atop_2_3.ContStat
-
-
-WWWStat = atop_1_26.WWWStat
-
-
-PerGPU = atop_2_4.PerGPU
-
-
-GPUStat = atop_2_4.GPUStat
-
-
-PerIFB = atop_2_4.PerIFB
-
-
-IFBStat = atop_2_4.IFBStat
-
-
-class PerLLC(ctypes.Structure):
-    """Embedded struct to describe basic information per LLC (Last-Level Cache).
-
-    C Name: perllc
+    C Name: perintf
     C Location: photosyst.h
-    C Parent: llcstat
+    C Parent: intfstat
     """
 
     _fields_ = [
-        ("id", ctypes.c_uint8),
-        ("occupancy", ctypes.c_float),
-        ("mbm_local", count_t),
-        ("mbm_total", count_t),
+        ("name", ctypes.c_char * 16),
+        ("rbyte", count_t),
+        ("rpack", count_t),
+        ("rerrs", count_t),
+        ("rdrop", count_t),
+        ("rfifo", count_t),
+        ("rframe", count_t),
+        ("rcompr", count_t),
+        ("rmultic", count_t),
+        ("rfuture", count_t * 4),
+        ("sbyte", count_t),
+        ("spack", count_t),
+        ("serrs", count_t),
+        ("sdrop", count_t),
+        ("sfifo", count_t),
+        ("scollis", count_t),
+        ("scarrier", count_t),
+        ("scompr", count_t),
+        ("sfuture", count_t * 4),
+        ("type", ctypes.c_char),
+        ("speed", ctypes.c_long),
+        ("speedp", ctypes.c_long),
+        ("duplex", ctypes.c_char),
+        ("cfuture", count_t * 4),
     ]
 
 
-class LLCStat(ctypes.Structure):
-    """Embedded struct to describe all LLCs (Last-Level Cache).
+class IntfStat(ctypes.Structure):
+    """Embedded struct to describe overall interface statistics.
 
-    C Name: llcstat
+    C Name: intfstat
     C Location: photosyst.h
     C Parent: sstat
     """
 
     _fields_ = [
-        ("nrllcs", ctypes.c_int),
-        ("perllc", PerLLC * MAXLLC),
+        ("nrintf", ctypes.c_int),
+        ("intf", PerIntf * MAXINTF),
     ]
-    fields_limiters = {"perllc": "nrllcs"}
+    fields_limiters = {
+        "intf": "nrintf",
+    }
+
+
+class PerNFSMount(ctypes.Structure):
+    """Embedded struct to describe per NFS mount statistics.
+
+    C Name: pernfsmount
+    C Location: photosyst.h
+    C Parent: nfsmounts
+    """
+
+    _fields_ = [
+        ("mountdev", ctypes.c_char * 128),
+        ("age", count_t),
+        ("bytesread", count_t),
+        ("byteswrite", count_t),
+        ("bytesdread", count_t),
+        ("bytesdwrite", count_t),
+        ("bytestotread", count_t),
+        ("bytestotwrite", count_t),
+        ("pagesmread", count_t),
+        ("pagesmwrite", count_t),
+        ("future", count_t * 8),
+    ]
+
+
+class Server(ctypes.Structure):
+    """Embedded struct to describe NFS server information.
+
+    C Name: server
+    C Location: photoproc.h
+    C Parent: nfsstat
+    """
+
+    _fields_ = [
+        ("netcnt", count_t),
+        ("netudpcnt", count_t),
+        ("nettcpcnt", count_t),
+        ("nettcpcon", count_t),
+        ("rpccnt", count_t),
+        ("rpcbadfmt", count_t),
+        ("rpcbadaut", count_t),
+        ("rpcbadcln", count_t),
+        ("rpcread", count_t),
+        ("rpcwrite", count_t),
+        ("rchits", count_t),
+        ("rcmiss", count_t),
+        ("rcnoca", count_t),
+        ("nrbytes", count_t),
+        ("nwbytes", count_t),
+        ("future", count_t * 8),
+    ]
+
+
+class Client(ctypes.Structure):
+    """Embedded struct to describe NFS client information.
+
+    C Name: client
+    C Location: photoproc.h
+    C Parent: nfsstat
+    """
+
+    _fields_ = [
+        ("rpccnt", count_t),
+        ("rpcretrans", count_t),
+        ("rpcautrefresh", count_t),
+        ("rpcread", count_t),
+        ("rpcwrite", count_t),
+        ("future", count_t * 8),
+    ]
+
+
+class NFSMounts(ctypes.Structure):
+    """Embedded struct to describe NFS mount information.
+
+    C Name: mfsmounts
+    C Location: photoproc.h
+    C Parent: nfsstat
+    """
+
+    _fields_ = [
+        ("nrmounts", ctypes.c_int),
+        ("nfsmnt", PerNFSMount * MAXNFSMOUNT),
+    ]
+    fields_limiters = {
+        "nfsmnt": "nrmounts",
+    }
+
+
+class NFSStat(ctypes.Structure):
+    """Embedded struct to describe NFS subsystem.
+
+    C Name: nfstat
+    C Location: photosyst.h
+    C Parent: sstat
+    """
+
+    _fields_ = [
+        ("server", Server),
+        ("client", Client),
+        ("nfsmounts", NFSMounts),
+    ]
+
+
+class PerContainer(ctypes.Structure):
+    """Embedded struct to describe per container statistics.
+
+    C Name: percontainer
+    C Location: photosyst.h
+    C Parent: constat
+    """
+
+    _fields_ = [
+        ("ctid", ctypes.c_ulong),
+        ("numproc", ctypes.c_ulong),
+        ("system", count_t),
+        ("user", count_t),
+        ("nice", count_t),
+        ("uptime", count_t),
+        ("physpages", count_t),
+    ]
+
+
+class ContStat(ctypes.Structure):
+    """Embedded struct to describe container subsystem.
+
+    C Name: contstat
+    C Location: photosyst.h
+    C Parent: sstat
+    """
+
+    _fields_ = [
+        ("nrcontainer", ctypes.c_int),
+        ("cont", PerContainer * MAXCONTAINER),
+    ]
+    fields_limiters = {
+        "cont": "nrcontainer",
+    }
+
+
+WWWStat = atop_1_26.WWWStat
 
 
 IPv4Stats = atop_1_26.IPv4Stats
 
 
-class ICMPv4Stats(ctypes.Structure):
-    """Embedded struct to describe overall ICMPv4 statistics.
-
-    C Name: icmpv4_stats
-    C Location: netstats.h
-    C Parent: netstat
-    """
-
-    _fields_ = [
-        ("InMsgs", count_t),
-        ("InErrors", count_t),
-        ("InCsumErrors", count_t),
-        ("InDestUnreachs", count_t),
-        ("InTimeExcds", count_t),
-        ("InParmProbs", count_t),
-        ("InSrcQuenchs", count_t),
-        ("InRedirects", count_t),
-        ("InEchos", count_t),
-        ("InEchoReps", count_t),
-        ("InTimestamps", count_t),
-        ("InTimestampReps", count_t),
-        ("InAddrMasks", count_t),
-        ("InAddrMaskReps", count_t),
-        ("OutMsgs", count_t),
-        ("OutErrors", count_t),
-        ("OutDestUnreachs", count_t),
-        ("OutTimeExcds", count_t),
-        ("OutParmProbs", count_t),
-        ("OutSrcQuenchs", count_t),
-        ("OutRedirects", count_t),
-        ("OutEchos", count_t),
-        ("OutEchoReps", count_t),
-        ("OutTimestamps", count_t),
-        ("OutTimestampReps", count_t),
-        ("OutAddrMasks", count_t),
-        ("OutAddrMaskReps", count_t),
-    ]
+ICMPv4Stats = atop_1_26.ICMPv4Stats
 
 
 UDPv4Stats = atop_1_26.UDPv4Stats
@@ -413,23 +416,7 @@ ICMPv6Stats = atop_1_26.ICMPv6Stats
 UDPv6Stats = atop_1_26.UDPv6Stats
 
 
-class NETStat(ctypes.Structure):
-    """Embedded struct to describe overall network statistics.
-
-    C Name: netstat
-    C Location: photosyst.h
-    C Parent: sstat
-    """
-
-    _fields_ = [
-        ("ipv4", IPv4Stats),
-        ("icmpv4", ICMPv4Stats),
-        ("udpv4", UDPv4Stats),
-        ("ipv6", IPv6Stats),
-        ("icmpv6", ICMPv6Stats),
-        ("udpv6", UDPv6Stats),
-        ("tcp", TCPStats),
-    ]
+NETStat = atop_1_26.NETStat
 
 
 class SStat(ctypes.Structure):
@@ -444,15 +431,9 @@ class SStat(ctypes.Structure):
         ("mem", MemStat),
         ("net", NETStat),
         ("intf", IntfStat),
-        ("memnuma", MemNUMA),
-        ("cpunuma", CPUNUMA),
         ("dsk", DSKStat),
         ("nfs", NFSStat),
         ("cfs", ContStat),
-        ("psi", Pressure),
-        ("gpu", GPUStat),
-        ("ifb", IFBStat),
-        ("llc", LLCStat),
         ("www", WWWStat),
     ]
 
@@ -492,36 +473,10 @@ class GEN(ctypes.Structure):
         ("vpid", ctypes.c_int),
         ("wasinactive", ctypes.c_int),
         ("container", ctypes.c_char * 16),
-        ("cgpath", ctypes.c_char * CGRLEN),
     ]
 
 
-class CPU(ctypes.Structure):
-    """Embedded struct to describe a single process' processor usage.
-
-    C Name: cpu
-    C Location: photoproc.h
-    C Parent: pstat
-    """
-
-    _fields_ = [
-        ("utime", count_t),
-        ("stime", count_t),
-        ("nice", ctypes.c_int),
-        ("prio", ctypes.c_int),
-        ("rtprio", ctypes.c_int),
-        ("policy", ctypes.c_int),
-        ("curcpu", ctypes.c_int),
-        ("sleepavg", ctypes.c_int),
-        ("cgcpuweight", ctypes.c_int),
-        ("cgcpumax", ctypes.c_int),
-        ("cgcpumaxr", ctypes.c_int),
-        ("ifuture", ctypes.c_int * 3),
-        ("wchan", ctypes.c_char * 16),
-        ("rundelay", count_t),
-        ("blkdelay", count_t),
-        ("cfuture", count_t * 3),
-    ]
+CPU = atop_1_26.CPU
 
 
 DSK = atop_1_26.DSK
@@ -532,7 +487,7 @@ class MEM(ctypes.Structure):
 
     C Name: mem
     C Location: photoproc.h
-    C Parent: pstat
+    C Parent: tstat
     """
 
     _fields_ = [
@@ -548,19 +503,31 @@ class MEM(ctypes.Structure):
         ("vstack", count_t),
         ("vlibs", count_t),
         ("vswap", count_t),
-        ("vlock", count_t),
-        ("cgmemmax", count_t),
-        ("cgmemmaxr", count_t),
-        ("cgswpmax", count_t),
-        ("cgswpmaxr", count_t),
-        ("cfuture", count_t * 3),
+        ("cfuture", count_t * 4),
     ]
 
 
-NET = atop_2_3.NET
+class NET(ctypes.Structure):
+    """Embedded struct to describe a single process' network usage.
 
+    C Name: net
+    C Location: photoproc.h
+    C Parent: tstat
+    """
 
-GPU = atop_2_4.GPU
+    _fields_ = [
+        ("tcpsnd", count_t),
+        ("tcpssz", count_t),
+        ("tcprcv", count_t),
+        ("tcprsz", count_t),
+        ("udpsnd", count_t),
+        ("udpssz", count_t),
+        ("udprcv", count_t),
+        ("udprsz", count_t),
+        ("avail1", count_t),
+        ("avail2", count_t),
+        ("cfuture", count_t * 4),
+    ]
 
 
 class TStat(ctypes.Structure):
@@ -576,7 +543,6 @@ class TStat(ctypes.Structure):
         ("dsk", DSK),
         ("mem", MEM),
         ("net", NET),
-        ("gpu", GPU),
     ]
 
 
@@ -584,7 +550,7 @@ class Header(ctypes.Structure, HeaderMixin):
     """Top level struct to describe information about the system running Atop and the log file itself.
 
     C Name: rawheader
-    C Location: rawlog.h
+    C Location: rawlog.c
     """
 
     _fields_ = [
@@ -595,8 +561,7 @@ class Header(ctypes.Structure, HeaderMixin):
         ("rawheadlen", ctypes.c_ushort),
         ("rawreclen", ctypes.c_ushort),
         ("hertz", ctypes.c_ushort),
-        ("pidwidth", ctypes.c_ushort),
-        ("sfuture", ctypes.c_ushort * 5),
+        ("sfuture", ctypes.c_ushort * 6),
         ("sstatlen", ctypes.c_uint),
         ("tstatlen", ctypes.c_uint),
         ("utsname", UTSName),
@@ -608,7 +573,7 @@ class Header(ctypes.Structure, HeaderMixin):
         ("ossub", ctypes.c_int),
         ("ifuture", ctypes.c_int * 6),
     ]
-    supported_version = "2.8"
+    supported_version = "2.3"
     Record = Record
     SStat = SStat
     TStat = TStat

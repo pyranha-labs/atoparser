@@ -82,7 +82,6 @@ class HeaderMixin:
         # Use a general getattr() call to ensure the instance can always set the attribute even on first call.
         # C structs have various ways of creating instances, so __init__ is not always called to set up attributes.
         if not getattr(self, "_semantic_version", None):
-            # pylint: disable=attribute-defined-outside-init
             self._major_version = (self.aversion >> 8) & 0x7F
             self._minor_version = self.aversion & 0xFF
             self._semantic_version = f"{self._major_version}.{self._minor_version}"

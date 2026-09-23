@@ -1,20 +1,23 @@
 # Additional recipes for Python based development.
 -include python.mk
 
-# Recipes unique to this project.
-UPSTREAM := git@github.com:pyranha-labs/atoparser.git
-PYLINT_EXTRAS := utils
+##### Project Overrides #####
+
+PYTHON_BIN := python3.12
+PYLINT_EXTRAS :=
 
 ##### Initial Development Setups and Configurations #####
 
+UPSTREAM := git@github.com:pyranha-labs/atoparser.git
+
 # Set up initial environment for development.
-GIT_PROJECT_ROOT := $(dir $(realpath $(lastword $(MAKEFILE_LIST))))
 .PHONY: setup
 setup:
-	ln -sfnv $(GIT_PROJECT_ROOT).hooks/pre-push $(GIT_PROJECT_ROOT).git/hooks/pre-push
+	ln -sfnv $(PY_PROJECT_ROOT)tools/pre-push $(PY_PROJECT_ROOT).git/hooks/pre-push
 	-git remote add upstream $(UPSTREAM)
-	git fetch upstream
+	-git fetch upstream
 	@echo "🏆 Git set up complete!"
 	curl https://raw.githubusercontent.com/pyranha-labs/build-tools/refs/heads/main/python.mk -o python.mk
 	make clean-venv venv
-	. $(GIT_PROJECT_ROOT)activate && make qa test
+	make default
+	@echo "🏆 Full set up complete!"
