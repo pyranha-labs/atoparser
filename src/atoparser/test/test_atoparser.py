@@ -1672,6 +1672,24 @@ TEST_CASES = {
 }
 
 
+def _cgchain_to_simple_dict(cgchainer: dict | atoparser.CGChainer) -> dict:
+    """Convert cgchain structs into simplified dictionaries for comparison operations."""
+    # Only pull enough values prove bytes were read into structs successfully in the correct order,
+    # without overwhelming test output.
+    if isinstance(cgchainer, atoparser.CGChainer):
+        cgchainer = atoparser.struct_to_dict(cgchainer)
+    simple_cgchainer = {
+        "cstat": {
+            "gen": {
+                "structlen": cgchainer["cstat"]["gen"]["structlen"],
+                "nprocs": cgchainer["cstat"]["gen"]["nprocs"],
+            }
+        },
+        "proclist": cgchainer["proclist"],
+    }
+    return simple_cgchainer
+
+
 def _read_log(log: str) -> list[dict]:
     """Convert an Atop log into an easily testable structured result."""
     samples = []
@@ -1735,37 +1753,22 @@ def _sstat_to_simple_dict(sstat: dict | atoparser.SStat) -> dict:
     return simple_sstat
 
 
-def _tstat_to_simple_dict(tstat: dict | atoparser.TStat) -> dict:
-    """Convert tstat structs into simplified dictionaries for comparison operations."""
-    # Only pull enough values prove bytes were read into structs successfully in the correct order,
-    # without overwhelming test output.
-    if isinstance(tstat, atoparser.TStat):
-        tstat = atoparser.struct_to_dict(tstat)
-    simple_tstat = {
-        "gen": {
-            "cmdline": tstat["gen"]["cmdline"],
-            "name": tstat["gen"]["name"],
-        },
-    }
-    return simple_tstat
+@pytest.mark.parametrize_test_case("test_case", TEST_CASES["file_cstat"])
+def test_file_cstat(test_case: dict, function_tester: Callable) -> None:
+    """Read a file and ensure the values in the cstats match expectations."""
 
+    def _get_struct(log: str) -> dict | None:
+        """Read a log and return the cstat from the last sample to ensure the entire file processed correctly."""
+        sample = _read_log(log)[-1]
+        cstats = sample["cgroup"]
+        if not cstats:
+            return None
+        dict_cstat = _cgchain_to_simple_dict(cstats[-1])
+        dict_cstat["sample_index"] = sample["record"]["record_index"]
+        dict_cstat["cstat_index"] = len(cstats) - 1
+        return dict_cstat
 
-def _cgchain_to_simple_dict(cgchainer: dict | atoparser.CGChainer) -> dict:
-    """Convert cgchain structs into simplified dictionaries for comparison operations."""
-    # Only pull enough values prove bytes were read into structs successfully in the correct order,
-    # without overwhelming test output.
-    if isinstance(cgchainer, atoparser.CGChainer):
-        cgchainer = atoparser.struct_to_dict(cgchainer)
-    simple_cgchainer = {
-        "cstat": {
-            "gen": {
-                "structlen": cgchainer["cstat"]["gen"]["structlen"],
-                "nprocs": cgchainer["cstat"]["gen"]["nprocs"],
-            }
-        },
-        "proclist": cgchainer["proclist"],
-    }
-    return simple_cgchainer
+    function_tester(test_case, _get_struct)
 
 
 @pytest.mark.parametrize_test_case("test_case", TEST_CASES["file_header"])
@@ -1821,24 +1824,6 @@ def test_file_tstat(test_case: dict, function_tester: Callable) -> None:
         dict_tstat["sample_index"] = sample["record"]["record_index"]
         dict_tstat["tstat_index"] = len(tstats) - 1
         return dict_tstat
-
-    function_tester(test_case, _get_struct)
-
-
-@pytest.mark.parametrize_test_case("test_case", TEST_CASES["file_cstat"])
-def test_file_cstat(test_case: dict, function_tester: Callable) -> None:
-    """Read a file and ensure the values in the cstats match expectations."""
-
-    def _get_struct(log: str) -> dict | None:
-        """Read a log and return the cstat from the last sample to ensure the entire file processed correctly."""
-        sample = _read_log(log)[-1]
-        cstats = sample["cgroup"]
-        if not cstats:
-            return None
-        dict_cstat = _cgchain_to_simple_dict(cstats[-1])
-        dict_cstat["sample_index"] = sample["record"]["record_index"]
-        dict_cstat["cstat_index"] = len(cstats) - 1
-        return dict_cstat
 
     function_tester(test_case, _get_struct)
 
@@ -1910,3 +1895,18 @@ def test_parseable(test_case: dict, function_tester: Callable) -> None:
         return json.loads(json.dumps(last_values, sort_keys=True))
 
     function_tester(test_case, _get_parseables)
+
+
+def _tstat_to_simple_dict(tstat: dict | atoparser.TStat) -> dict:
+    """Convert tstat structs into simplified dictionaries for comparison operations."""
+    # Only pull enough values prove bytes were read into structs successfully in the correct order,
+    # without overwhelming test output.
+    if isinstance(tstat, atoparser.TStat):
+        tstat = atoparser.struct_to_dict(tstat)
+    simple_tstat = {
+        "gen": {
+            "cmdline": tstat["gen"]["cmdline"],
+            "name": tstat["gen"]["name"],
+        },
+    }
+    return simple_tstat

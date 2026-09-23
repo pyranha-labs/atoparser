@@ -8,35 +8,6 @@ from atoparser.structs import atop_1_26
 # pylint: disable=unused-argument,invalid-name
 
 
-def parse_cpu(
-    header: utils.Header,
-    record: utils.Record,
-    sstat: utils.SStat,
-    tstats: list[utils.TStat],
-) -> dict:
-    """Retrieves statistics for Atop 'cpu' parseable representing per core usage."""
-    for index, cpu in enumerate(sstat.cpu.cpu):
-        if index >= sstat.cpu.nrcpu:
-            # Core list contains 100 entries, but only up the count specified in the cpu stat are valid.
-            break
-        values = {
-            "timestamp": record.curtime,
-            "interval": record.interval,
-            "ticks": header.hertz,
-            "proc": index,
-            "system": cpu.stime,
-            "user": cpu.utime,
-            "niced": cpu.ntime,
-            "idle": cpu.itime,
-            "wait": cpu.wtime,
-            "irq": cpu.Itime,
-            "softirq": cpu.Stime,
-            "steal": cpu.steal,
-            "guest": cpu.guest,
-        }
-        yield values
-
-
 def parse_CPL(
     header: utils.Header,
     record: utils.Record,
@@ -402,3 +373,32 @@ def parse_SWP(
         "committed_limit": sstat.mem.commitlim,
     }
     yield values
+
+
+def parse_cpu(
+    header: utils.Header,
+    record: utils.Record,
+    sstat: utils.SStat,
+    tstats: list[utils.TStat],
+) -> dict:
+    """Retrieves statistics for Atop 'cpu' parseable representing per core usage."""
+    for index, cpu in enumerate(sstat.cpu.cpu):
+        if index >= sstat.cpu.nrcpu:
+            # Core list contains 100 entries, but only up the count specified in the cpu stat are valid.
+            break
+        values = {
+            "timestamp": record.curtime,
+            "interval": record.interval,
+            "ticks": header.hertz,
+            "proc": index,
+            "system": cpu.stime,
+            "user": cpu.utime,
+            "niced": cpu.ntime,
+            "idle": cpu.itime,
+            "wait": cpu.wtime,
+            "irq": cpu.Itime,
+            "softirq": cpu.Stime,
+            "steal": cpu.steal,
+            "guest": cpu.guest,
+        }
+        yield values

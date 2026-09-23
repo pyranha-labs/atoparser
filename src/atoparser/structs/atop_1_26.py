@@ -12,16 +12,14 @@ See https://github.com/Atoptool/atop for more information and full details about
 Using schemas and structs from Atop 1.26.
 """
 
+# order: skip-file
+
 import ctypes
 
 from atoparser.structs.shared import HeaderMixin
 from atoparser.structs.shared import UTSName
 from atoparser.structs.shared import count_t
 from atoparser.structs.shared import time_t
-
-# Disable the following pylint warnings to allow the variables and classes to match the style from the C.
-# This helps with maintainability and cross-referencing.
-# pylint: disable=invalid-name,too-few-public-methods
 
 # Definitions from atop.h
 ACCTACTIVE = 0x00000001

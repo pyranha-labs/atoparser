@@ -1,12 +1,12 @@
 [project]
 name = "atoparser"
 description = "Utilities for reading Atop files natively in Python"
+version = "3.3.1"
 readme = "README.md"
-dynamic = ["version"]
 authors = [
     { name = "David Fritz" },
 ]
-requires-python = ">=3.10"
+requires-python = ">=3.12"
 license = { text = "MIT" }
 keywords = ["monitoring", "analysis", "diagnostics", "utilization", "atop"]
 classifiers = [
@@ -17,12 +17,22 @@ classifiers = [
     "Programming Language :: Python",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3 :: Only",
-    "Programming Language :: Python :: 3.10",
-    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
     "Topic :: Software Development",
     "Topic :: Scientific/Engineering",
     "Typing :: Typed",
     "Operating System :: POSIX :: Linux",
+]
+[dependency-groups]
+dev = [
+    "bandit>=1.9.4",
+    "mypy>=2.3.1",
+    "pip-audit>=2.10.1",
+    "pylint>=4.0.8",
+    "pytest>=9.1.1",
+    "pytest-cov>=7.1.0",
+    "pytest-xdist>=3.8.0",
+    "ruff>=0.16.8",
 ]
 
 [project.urls]
@@ -34,28 +44,19 @@ Issues = "https://github.com/pyranha-labs/atoparser/issues"
 atoparser = "atoparser.reader:main"
 
 [build-system]
-requires = ["setuptools >= 80.0"]
-build-backend = "setuptools.build_meta"
-
-[tool.setuptools]
-include-package-data = true
-packages = { find = { where = ["."], include = ["atoparser*"], exclude = ["*test", "tests*"] } }
-platforms = [
-    "Linux",
-]
-
-[tool.setuptools.dynamic]
-version = { attr = "atoparser.__version__" }
-readme = { file = ["README.md"] }
+requires = ["uv_build>=0.12.17,<0.13.0"]
+build-backend = "uv_build"
 
 [tool.bandit]
 exclude_dirs = [
+    # Sibling worktrees live in ".claude/worktrees", each a full checkout, so a scan of the project root walks
+    # into every one and fails the gate on another branch's code. Every entry is matched as a substring of the
+    # full path bandit walks, which only reads as "under the scan root" while that root is relative; the `security`
+    # recipe scopes the root of the scan to relative location instead of git root for exactly that reason.
+    ".claude",
     ".venv",
-    "venv",
-    "test",
-]
-targets = [
-    "atoparser",
+    "/test/",
+    "conftest.py",
 ]
 
 [tool.coverage.report]
@@ -63,6 +64,13 @@ fail_under = 95
 
 [tool.coverage.run]
 branch = true
+source = [
+    "atoparser"
+]
+omit = [
+    # Test folders contain test code that do not need to be reported on. They are the report.
+    "*/test/*",
+]
 
 [tool.pylint]
 # Pylint requires a full list of disables, or a full list of includes, and cannot be partially overridden.
@@ -74,45 +82,67 @@ disable = [
     "locally-disabled",
     "file-ignored",
     "suppressed-message",
-    "useless-suppression",
+    # I0021 useless-suppression, catch retired ignores.
+    # `# pylint: disable=` whose message would not have fired is indistinguishable from a critical one,
+    # so without this there is nothing retires an ignore once the code stops needing it. Commenting out
+    # does not fail on hit, since it is informational by default. Kept visible for comparing to defaults.
+    # "useless-suppression",
     "deprecated-pragma",
     "use-symbolic-message-instead",
-    # Atoparser specific modifications.
+    # Project specific modifications.
     # W1203, allow f-strings to be used in logging messages.
     "logging-fstring-interpolation",
-    # C0301 line too long, up to maintainers' best judgement.
+    # C0301 line too long, up to maintainers' best judgment.
     "line-too-long",
-    # R0801 duplicate code, up to maintainers' best judgement.
+    # R0801 duplicate code, up to maintainers' best judgment.
     "duplicate-code",
-    # R0903 too-few-public-methods, custom classes are allowed to have low amount of public functions.
+    # R0903 too-few-public-methods, custom classes are allowed to have a low number of public functions.
     "too-few-public-methods",
+]
+fail-on = [
+    # I0021 is informational, and sets no failure in pylint's exit code, until manually set to fail.
+    "useless-suppression",
 ]
 
 [tool.pylint.MASTER]
-# Skip test files from lint to avoid littering with unecessary ignores.
-# Test files are known to perform logic that is often non-standard in order to test all scenarios.
-ignore = ["test"]
 # Use jobs 0 to autodetect CPUs on system for parallel performance.
 jobs = 0
+# Apply a PYTHONPATH to the pylint run to ensure the correct paths are used.
+init-hook = 'import sys; sys.path.append(".")'
+ignore = [
+    "__pycache__",
+    "build",
+    "conftest.py",
+    "dist",
+    # Skip test files from lint to avoid littering with unnecessary ignores.
+    # Test files are known to perform logic that is often non-standard in order to test all scenarios.
+    "test",
+]
 
 [tool.pylint.DESIGN]
 max-args = 6
 max-attributes = 10
 
 [tool.pytest.ini_options]
-addopts = "-n auto"
-norecursedirs = [".*", "venv"]
+addopts = "-n auto --maxprocesses=8"
+norecursedirs = ".* __pycache__ build dist site-packages virtualenvs"
 filterwarnings = [
     # Promote all warnings to errors to ensure performance, forwards compatibility, and code quality.
     "error"
 ]
 markers = [
-    "parametrize_test_case: Mark test as paramtrized with an object that auto generates values and ids based on type.",
+    "parametrize_test_case: Mark test as parametrized with a TEST_CASES dict that supplies the pytest ids.",
 ]
 
 [tool.mypy]
+exclude = "(__pycache__|build|dist)/"
 ignore_missing_imports = true
 warn_unused_configs = true
+# The `type: ignore` counterpart to pylint's useless-suppression, and it earns its place for the same
+# reason: the per-module `disable_error_code` overrides below silence whole codes, so an ignore naming
+# one of them reads as load-bearing while suppressing nothing. Unlike I0021 this reports as an `error`,
+# so it fails the run on its own.
+warn_unused_ignores = true
 show_error_codes = true
 incremental = false
 follow_imports = "skip"
@@ -158,8 +188,9 @@ disable_error_code = [
 ]
 disallow_untyped_defs = true
 
-# Ruff is currently only used as a replacement for pycodestyle, black, and isort.
-# pydocstyle and pylint are used separately to maximize coverage.
+# Ruff replaces pycodestyle, pydocstyle, black, and isort, and carries the rule families below that no
+# other gate covers. pylint is used separately to maximize coverage, and a family it already checks is
+# left out rather than run twice.
 [tool.ruff]
 line-length = 120
 
@@ -182,7 +213,7 @@ ignore = [
     "D102",
     "D105",
 ]
-# Preview required for pycodestyle rules as of ruff 0.2.2.
+# Preview required for pycodestyle rules as of ruff 0.4.0.
 preview = true
 
 [tool.ruff.lint.isort]

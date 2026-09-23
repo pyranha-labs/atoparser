@@ -15,7 +15,7 @@ Advanced guides for working with Atoparser. For basic guides, refer to the [READ
 
 1. Update the `atoparser/utils.py` file to include the new version in the imports and `_VERSIONS` list.
 
-1. Use the `utils/build_atop.sh` script to generate a new sample Atop log file, and place in `atoparser/test/files/`.
+1. Use the `../tools/build_atop.sh` script to generate a new sample Atop log file, and place in `atoparser/test/files/`.
 
 1. Compress the new log with `gzip` to reduce storage overhead.
 
