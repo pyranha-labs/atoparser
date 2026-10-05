@@ -3,6 +3,7 @@
 """Simple Atop log processor."""
 
 import argparse
+import builtins
 import gzip
 import json
 
@@ -109,7 +110,7 @@ def parse_file(  # pylint: disable=too-many-locals
                     if show_cstats:
                         converted["cgroup"] = [atoparser.struct_to_dict(stat) for stat in cgroups]
                     samples.append(converted)
-    print(json.dumps(samples, indent=2 if pretty_print else None))
+    builtins.print(json.dumps(samples, indent=2 if pretty_print else None))
 
 
 def main() -> None:

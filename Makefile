@@ -17,7 +17,6 @@ setup:
 	-git remote add upstream $(UPSTREAM)
 	-git fetch upstream
 	@echo "🏆 Git set up complete!"
-	curl https://raw.githubusercontent.com/pyranha-labs/build-tools/refs/heads/main/python.mk -o python.mk
-	make clean-venv venv
-	make default
+	curl -fsSL https://raw.githubusercontent.com/pyranha-labs/build-tools/refs/heads/main/python.mk -o python.mk
+	make update-python-mk clean-venv venv default
 	@echo "🏆 Full set up complete!"
