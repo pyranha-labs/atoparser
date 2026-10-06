@@ -221,3 +221,11 @@ force-single-line = true
 
 [tool.ruff.lint.pydocstyle]
 convention = "google"
+
+[tool.pyqa]
+ignore = [
+    "doc-missing-section",
+    # Disable ordering to maintain order similar to C.
+    "order-alpha",
+    "order-assignment",
+]

@@ -64,6 +64,5 @@ cython_debug/
 activate
 python.mk
 build_python_release.sh
-check_pydocs.py
-organize_pycode.py
+pyqa.py
 uv.lock
