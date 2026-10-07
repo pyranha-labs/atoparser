@@ -17,6 +17,9 @@ setup:
 	-git remote add upstream $(UPSTREAM)
 	-git fetch upstream
 	@echo "🏆 Git set up complete!"
-	curl -fsSL https://raw.githubusercontent.com/pyranha-labs/build-tools/refs/heads/main/python.mk -o python.mk
-	make update-python-mk clean-venv venv default
+	@# Bootstrap python.mk once; from then on it pulls itself and other utilities whenever make runs.
+	@[ -f python.mk ] || (tmp_dir="$$(mktemp -d)" && trap 'rm -rf "$$tmp_dir"' EXIT && \
+		git clone --quiet --depth 1 --no-checkout git@github.com:pyranha-labs/build-tools.git "$$tmp_dir" && \
+		git -C "$$tmp_dir" show HEAD:python.mk > python.mk)
+	$(MAKE) clean-venv venv default
 	@echo "🏆 Full set up complete!"
