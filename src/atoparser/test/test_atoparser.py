@@ -23,7 +23,7 @@ with gzip.open(os.path.join(TEST_FILE_DIR, "atop_1_26.log.gz")) as raw_file:
     RECORD_BYTES = bytearray(_record)
     SSTAT_BYTES = raw_file.read(_record.scomplen)
 
-TEST_CASES = {
+TESTS = {
     "file_header": {
         "1.26": {
             "args": [
@@ -1380,13 +1380,16 @@ TEST_CASES = {
             "args": [
                 io.BytesIO(HEADER_BYTES.replace(b"\xef", b"\xed")),
             ],
-            "raises": ValueError,
+            "raises": (ValueError, r"File does not contain raw atop output \(wrong magic number\): 0xfeedbeed"),
         },
         "Truncated": {
             "args": [
                 io.BytesIO(HEADER_BYTES[:32]),
             ],
-            "raises": ValueError,
+            "raises": (
+                ValueError,
+                r"File has incompatible Atop format. Struct length evaluations \(type, found, expected\): \[\('Header', 480, 480\), \('Record', 80, 80\), \('SStat', 88368, 88368\), \('PStat', 0, 616\)]",
+            ),
         },
     },
     "get_record": {
@@ -1461,7 +1464,7 @@ TEST_CASES = {
                 io.BytesIO(HEADER_BYTES + RECORD_BYTES + SSTAT_BYTES[:16]),
                 atop_1_26_structs.Header.from_buffer(HEADER_BYTES),
             ],
-            "raises": zlib.error,
+            "raises": (zlib.error, "Error -5 while decompressing data: incomplete or truncated stream"),
         },
     },
     "parseable": {
@@ -1753,8 +1756,8 @@ def _sstat_to_simple_dict(sstat: dict | atoparser.SStat) -> dict:
     return simple_sstat
 
 
-@pytest.mark.parametrize_test_case("test_case", TEST_CASES["file_cstat"])
-def test_file_cstat(test_case: dict, function_tester: Callable) -> None:
+@pytest.mark.parametrize_tests(TESTS["file_cstat"])
+def test_file_cstat(test: dict, function_tester: Callable) -> None:
     """Read a file and ensure the values in the cstats match expectations."""
 
     def _get_struct(log: str) -> dict | None:
@@ -1768,11 +1771,11 @@ def test_file_cstat(test_case: dict, function_tester: Callable) -> None:
         dict_cstat["cstat_index"] = len(cstats) - 1
         return dict_cstat
 
-    function_tester(test_case, _get_struct)
+    function_tester(test, _get_struct)
 
 
-@pytest.mark.parametrize_test_case("test_case", TEST_CASES["file_header"])
-def test_file_header(test_case: dict, function_tester: Callable) -> None:
+@pytest.mark.parametrize_tests(TESTS["file_header"])
+def test_file_header(test: dict, function_tester: Callable) -> None:
     """Read a file and ensure the values in the header match expectations."""
 
     def _get_struct(log: str) -> dict:
@@ -1784,22 +1787,22 @@ def test_file_header(test_case: dict, function_tester: Callable) -> None:
             header["semantic_version"] = raw_header.semantic_version
             return json.loads(json.dumps(header, sort_keys=True))
 
-    function_tester(test_case, _get_struct)
+    function_tester(test, _get_struct)
 
 
-@pytest.mark.parametrize_test_case("test_case", TEST_CASES["file_record"])
-def test_file_record(test_case: dict, function_tester: Callable) -> None:
+@pytest.mark.parametrize_tests(TESTS["file_record"])
+def test_file_record(test: dict, function_tester: Callable) -> None:
     """Read a file and ensure the values in the records match expectations."""
 
     def _get_struct(log: str) -> dict:
         """Read a log and return the record from the last sample to ensure the entire file processed correctly."""
         return _read_log(log)[-1]["record"]
 
-    function_tester(test_case, _get_struct)
+    function_tester(test, _get_struct)
 
 
-@pytest.mark.parametrize_test_case("test_case", TEST_CASES["file_sstat"])
-def test_file_sstat(test_case: dict, function_tester: Callable) -> None:
+@pytest.mark.parametrize_tests(TESTS["file_sstat"])
+def test_file_sstat(test: dict, function_tester: Callable) -> None:
     """Read a file and ensure the values in the sstats match expectations."""
 
     def _get_struct(log: str) -> dict:
@@ -1809,11 +1812,11 @@ def test_file_sstat(test_case: dict, function_tester: Callable) -> None:
         simple_sstat["sample_index"] = sample["record"]["record_index"]
         return simple_sstat
 
-    function_tester(test_case, _get_struct)
+    function_tester(test, _get_struct)
 
 
-@pytest.mark.parametrize_test_case("test_case", TEST_CASES["file_tstat"])
-def test_file_tstat(test_case: dict, function_tester: Callable) -> None:
+@pytest.mark.parametrize_tests(TESTS["file_tstat"])
+def test_file_tstat(test: dict, function_tester: Callable) -> None:
     """Read a file and ensure the values in the tstats match expectations."""
 
     def _get_struct(log: str) -> dict:
@@ -1825,11 +1828,11 @@ def test_file_tstat(test_case: dict, function_tester: Callable) -> None:
         dict_tstat["tstat_index"] = len(tstats) - 1
         return dict_tstat
 
-    function_tester(test_case, _get_struct)
+    function_tester(test, _get_struct)
 
 
-@pytest.mark.parametrize_test_case("test_case", TEST_CASES["get_header"])
-def test_get_header(test_case: dict, function_tester: Callable) -> None:
+@pytest.mark.parametrize_tests(TESTS["get_header"])
+def test_get_header(test: dict, function_tester: Callable) -> None:
     """Unit tests for get_header."""
 
     def _get_header(raw_file: io.BytesIO) -> dict:
@@ -1841,11 +1844,11 @@ def test_get_header(test_case: dict, function_tester: Callable) -> None:
             )
         )
 
-    function_tester(test_case, _get_header)
+    function_tester(test, _get_header)
 
 
-@pytest.mark.parametrize_test_case("test_case", TEST_CASES["get_record"])
-def test_get_record(test_case: dict, function_tester: Callable) -> None:
+@pytest.mark.parametrize_tests(TESTS["get_record"])
+def test_get_record(test: dict, function_tester: Callable) -> None:
     """Unit tests for get_record."""
 
     def _get_record(raw_file: io.BytesIO, record_cls: atoparser.Record) -> dict:
@@ -1858,12 +1861,12 @@ def test_get_record(test_case: dict, function_tester: Callable) -> None:
         )
 
     # Read the header to ensure the offset is correct prior to reading the record:
-    atoparser.get_header(test_case["args"][0])
-    function_tester(test_case, _get_record)
+    atoparser.get_header(test["args"][0])
+    function_tester(test, _get_record)
 
 
-@pytest.mark.parametrize_test_case("test_case", TEST_CASES["get_sstat"])
-def test_get_sstat(test_case: dict, function_tester: Callable) -> None:
+@pytest.mark.parametrize_tests(TESTS["get_sstat"])
+def test_get_sstat(test: dict, function_tester: Callable) -> None:
     """Unit tests for get_sstat."""
 
     def _get_sstat(raw_file: io.BytesIO, header: atoparser.Header) -> dict:
@@ -1876,14 +1879,14 @@ def test_get_sstat(test_case: dict, function_tester: Callable) -> None:
         )
 
     # Read the header and record to ensure the offset is correct prior to reading the stats.
-    mock_file = test_case["args"][0]
+    mock_file = test["args"][0]
     header = atoparser.get_header(mock_file)
     record = atoparser.get_record(mock_file, header)
-    function_tester(test_case, _get_sstat)
+    function_tester(test, _get_sstat)
 
 
-@pytest.mark.parametrize_test_case("test_case", TEST_CASES["parseable"])
-def test_parseable(test_case: dict, function_tester: Callable) -> None:
+@pytest.mark.parametrize_tests(TESTS["parseable"])
+def test_parseable(test: dict, function_tester: Callable) -> None:
     """Read a file and ensure the values in the "parseable" output match expectations."""
 
     def _get_parseables(log: str, parseables: list[str], module: ModuleType) -> dict:
@@ -1894,7 +1897,7 @@ def test_parseable(test_case: dict, function_tester: Callable) -> None:
         last_values["sample_index"] = len(results) - 1
         return json.loads(json.dumps(last_values, sort_keys=True))
 
-    function_tester(test_case, _get_parseables)
+    function_tester(test, _get_parseables)
 
 
 def _tstat_to_simple_dict(tstat: dict | atoparser.TStat) -> dict:

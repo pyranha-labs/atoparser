@@ -11,7 +11,7 @@ from atoparser import reader
 from atoparser.parsers import atop_1_26 as atop_1_26_parsers
 
 TEST_FILE_DIR = os.path.join(os.path.dirname(__file__), "files")
-TEST_CASES = {
+TESTS = {
     "parse_file": {
         "default": {
             "args": [
@@ -69,8 +69,8 @@ TEST_CASES = {
 }
 
 
-@pytest.mark.parametrize_test_case("test_case", TEST_CASES["parse_file"])
-def test_parse_file(test_case: dict, function_tester: Callable, capsys: pytest.CaptureFixture) -> None:
+@pytest.mark.parametrize_tests(TESTS["parse_file"])
+def test_parse_file(test: dict, function_tester: Callable, capsys: pytest.CaptureFixture) -> None:
     """Read a file and ensure the values in the records match expectations."""
 
     def _get_struct(*args: Any, **kwargs: Any) -> dict:
@@ -86,10 +86,10 @@ def test_parse_file(test_case: dict, function_tester: Callable, capsys: pytest.C
             "stderr": captured.err.strip().splitlines()[-10:],
         }
 
-    function_tester(test_case, _get_struct)
+    function_tester(test, _get_struct)
 
 
-@pytest.mark.parametrize_test_case("parseable", reader.PARSEABLES)
+@pytest.mark.parametrize_tests("parseable", reader.PARSEABLES)
 def test_parseable_map(parseable: str) -> None:
     """Unit test to ensure every parseable has a corresponding parse_* function."""
     assert getattr(atop_1_26_parsers, f"parse_{parseable}") is not None, (
