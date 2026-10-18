@@ -49,7 +49,7 @@ def _finalize_test(test: dict, result: Any, compare: Callable[[Any, Any], bool] 
         actual = result
         expected = test.get("returns")
     equals = compare(actual, expected) if compare else actual == expected
-    assert equals, f"\nResult:\n\t{actual}\nExpected:\n\t{expected}"
+    assert equals, f"\nResult:\n\t{actual}\nExpected:\n\t{expected}"  # nosec B101 # Allow asserts for pytest failures.
 
 
 @pytest.fixture(name="function_tester")
